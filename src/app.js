@@ -242,13 +242,13 @@
 
   function applyToCurrent(src) {
     const e = cur();
-    e.mode = src.mode; e.rows = clone(src.rows); e.fundo = '';
+    e.mode = src.mode; e.rows = clone(src.rows); e.fundo = src.fundo || '';
     renderEditor(); renderList(); refresh(); save();
   }
   function addEnsaios(list) {
     let first = null;
     for (const s of list) {
-      const e = { id: uid(), name: s.name || `Ensaio ${state.ensaios.length + 1}`, color: nextColor(), mode: s.mode || 'passa', rows: clone(s.rows), fundo: '', visible: true };
+      const e = { id: uid(), name: s.name || `Ensaio ${state.ensaios.length + 1}`, color: nextColor(), mode: s.mode || 'passa', rows: clone(s.rows), fundo: s.fundo || '', visible: true };
       state.ensaios.push(e); first = first || e;
     }
     if (first) state.sel = first.id;
@@ -286,6 +286,10 @@
   const dlg = $('#dlgPaste');
   $('#btnPaste').onclick = () => { $('#pasteMsg').textContent = ''; $('#pasteText').value = ''; dlg.showModal ? dlg.showModal() : dlg.setAttribute('open', ''); setTimeout(() => $('#pasteText').focus(), 30); };
   $('#pasteCancel').onclick = () => dlg.close();
+  $('#btnTemplate').onclick = () => {
+    saveBlob(new Blob([IO.buildTemplate()], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'modelo-granulometria.xlsx');
+    toast('Modelo baixado — preencha no Excel e volte aqui para importar ou colar.');
+  };
   function parsePasted() {
     const res = IO.rowsToEnsaios(IO.parseText($('#pasteText').value), 'Ensaio colado');
     if (!res.length) { $('#pasteMsg').textContent = 'Não encontrei dados numéricos. Use diâmetro na 1ª coluna e os valores nas seguintes.'; return null; }

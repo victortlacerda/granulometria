@@ -9,6 +9,7 @@ Funciona **no navegador e no celular, sem instalar nada e sem internet**: é um 
 ### Por que usar
 
 - **Sem digitar de novo:** cole a tabela do Excel ou importe `.xlsx`, `.csv` ou `.txt`, com % passante, % retida acumulada ou massa retida.
+- **Planilha modelo pronta:** baixe um Excel com as peneiras padrão já preenchidas; é só digitar as massas retidas e o % passante sai calculado.
 - **Curva profissional:** escala logarítmica, peneiras ASTM no topo, % retida acumulada no eixo da direita, faixas de sedimentação e peneiramento e D10/D15/D30/D60/D85 marcados no gráfico.
 - **Coeficientes e diagnóstico:** Cu, Cc e graduação (bem graduado, uniforme ou graduação aberta) com a fórmula aplicada e a interpretação do resultado.
 - **Classificação e frações:** frações pela ABNT NBR 6502 ou pelo SUCS (ASTM D2487), SUCS preliminar e estimativa de permeabilidade (Hazen) para areias limpas.
@@ -22,8 +23,8 @@ Funciona **no navegador e no celular, sem instalar nada e sem internet**: é um 
 |---|---|
 | ![Tabela de resultados e cartões de cada ensaio com D10, D30, D60, Cu, Cc, frações e SUCS preliminar](docs/screenshots/02-resultados.jpg) | ![Curva com frações SUCS, peneiras marcadas e tabela de frações e peneiras limite](docs/screenshots/03-curva-sucs.jpg) |
 | **Resultados:** tabela-resumo e um cartão por ensaio com coeficientes, frações e SUCS. | **Frações SUCS e peneiras:** troque o sistema de frações e veja as peneiras limite. |
-| ![Janela para colar dados copiados do Excel](docs/screenshots/04-colar-excel.jpg) | ![Aba Teoria e aplicações com índice e explicação do peneiramento](docs/screenshots/05-teoria.jpg) |
-| **Colar do Excel:** copie as células e crie um ensaio novo em um clique. | **Teoria e aplicações:** o conteúdo da aula, do peneiramento à classificação SUCS. |
+| ![Janela para colar dados do Excel, com o botão Baixar planilha modelo](docs/screenshots/04-colar-excel.jpg) | ![Aba Teoria e aplicações com índice e explicação do peneiramento](docs/screenshots/05-teoria.jpg) |
+| **Colar do Excel:** baixe a planilha modelo, preencha e cole; o ensaio é criado em um clique. | **Teoria e aplicações:** o conteúdo da aula, do peneiramento à classificação SUCS. |
 
 **No celular:**
 

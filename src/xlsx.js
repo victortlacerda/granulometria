@@ -123,12 +123,14 @@ const GranuloIO = (() => {
 <font><b/><sz val="14"/><color rgb="FF1E3A5F"/><name val="Calibri"/></font>
 <font><i/><sz val="10"/><color rgb="FF6B7280"/><name val="Calibri"/></font>
 </fonts>
-<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>
-<fill><patternFill patternType="solid"><fgColor rgb="FFDCEBFA"/><bgColor indexed="64"/></patternFill></fill></fills>
-<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>
-<border><left/><right/><top/><bottom style="thin"><color rgb="FF9DB4CC"/></bottom><diagonal/></border></borders>
+<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFDCEBFA"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFFFF4C7"/><bgColor indexed="64"/></patternFill></fill></fills>
+<borders count="3"><border><left/><right/><top/><bottom/><diagonal/></border>
+<border><left/><right/><top/><bottom style="thin"><color rgb="FF9DB4CC"/></bottom><diagonal/></border>
+<border><left style="thin"><color rgb="FFE0B84A"/></left><right style="thin"><color rgb="FFE0B84A"/></right><top style="thin"><color rgb="FFE0B84A"/></top><bottom style="thin"><color rgb="FFE0B84A"/></bottom><diagonal/></border></borders>
 <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-<cellXfs count="8">
+<cellXfs count="10">
 <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
 <xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
 <xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>
@@ -137,6 +139,8 @@ const GranuloIO = (() => {
 <xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/>
 <xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
 <xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="0" fontId="0" fillId="3" borderId="2" xfId="0" applyFill="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment wrapText="1" vertical="top"/></xf>
 </cellXfs>
 <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
 </styleSheet>`;
@@ -205,7 +209,7 @@ const GranuloIO = (() => {
     files.unshift(
       { name: '[Content_Types].xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${ctSheets.join('')}</Types>` },
       { name: '_rels/.rels', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>` },
-      { name: 'xl/workbook.xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${wbSheets.join('')}</sheets></workbook>` },
+      { name: 'xl/workbook.xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${wbSheets.join('')}</sheets><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>` },
       { name: 'xl/_rels/workbook.xml.rels', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${wbRels.join('')}</Relationships>` },
       { name: 'xl/styles.xml', data: STYLES },
     );
@@ -274,6 +278,55 @@ const GranuloIO = (() => {
       }
       sheets.push({ name: it.name, rows: r, cols: [15, 13, 19, 14], freeze: 1 });
     });
+    return buildXlsx(sheets);
+  }
+
+  /* ------------------------------------------ Planilha modelo para preencher */
+  // estilos: 8 = célula de entrada (amarela) · 9 = texto com quebra de linha
+  function buildTemplate(opts = {}) {
+    const sieves = C.SIEVES.map(s => ({ d: s.d, label: s.label }));         // 14 peneiras (76 → 0,075)
+    const sed = [0.05, 0.02, 0.01, 0.005, 0.002].map(d => ({ d, label: 'sedimentação' }));
+    const n = sieves.length;               // linhas 2..n+1
+    const fundoRow = n + 2;                // "Fundo (prato)"
+    const last = n + 1;
+    const rows = [['Diâmetro (mm)', 'Massa retida (g)', '% Passante', '% Retida acumulada', 'Peneira / ensaio'].map(h => ({ v: h, s: 1 }))];
+    sieves.forEach((s, i) => {
+      const r = i + 2;
+      rows.push([
+        { v: s.d, s: 0 },
+        { v: '', s: 8 },
+        { f: `IF(OR(B${r}="",$G$2<=0),"",100*(1-SUM(B$2:B${r})/$G$2))`, s: 4 },
+        { f: `IF(C${r}="","",100-C${r})`, s: 4 },
+        s.label,
+      ]);
+    });
+    rows.push([{ v: 'Fundo (prato)', s: 7 }, { v: '', s: 8 }, '', '', { v: 'massa retida no prato', s: 5 }]);
+    sed.forEach((s, i) => {
+      const r = fundoRow + 1 + i;
+      rows.push([{ v: s.d, s: 6 }, { v: '—', s: 5 }, { v: '', s: 8 }, { f: `IF(C${r}="","",100-C${r})`, s: 4 }, { v: 'sedimentação (digite o % passante)', s: 5 }]);
+    });
+    // total das massas ao lado da tabela (G1 = rótulo, G2 = soma)
+    rows[0][6] = { v: 'Massa total (g)', s: 1 };
+    rows[1][6] = { f: `SUM(B2:B${last})+N(B${fundoRow})`, s: 3 };
+
+    const help = [
+      [{ v: 'Planilha modelo — análise granulométrica', s: 2 }],
+      [''],
+      [{ v: 'Como preencher', s: 7 }],
+      ['1. Na aba "Ensaio 1", preencha as células amarelas.'],
+      ['2. Peneiramento: digite a MASSA RETIDA (g) em cada peneira (coluna B) e no fundo/prato. O % passante (coluna C) é calculado sozinho.'],
+      ['   Se você já tem o % passante, digite-o direto na coluna C (pode sobrescrever a fórmula).'],
+      ['3. Sedimentação (fração fina, < 0,075 mm): digite o % passante (coluna C) de cada diâmetro obtido no ensaio do densímetro. Deixe em branco o que não tiver.'],
+      ['4. Pode apagar ou acrescentar linhas de diâmetro. Deixe em branco as peneiras que não usou.'],
+      ['5. Para comparar vários solos, copie a aba "Ensaio 1" (clique direito → Mover ou copiar) e renomeie — cada aba vira um ensaio.'],
+      ['6. No app: "Importar arquivo" (abre este .xlsx) ou copie as colunas A e C, e use "Colar do Excel".'],
+      [''],
+      [{ v: 'Séries de peneiras: 76 mm (3″) · 50 · 38 · 25 · 19 · 9,5 · 4,75 (nº 4) · 2,0 (nº 10) · 1,2 · 0,6 (nº 30) · 0,42 (nº 40) · 0,25 · 0,15 · 0,075 (nº 200).', s: 5 }],
+    ];
+    const sheets = [
+      { name: opts.name || 'Ensaio 1', rows, cols: [16, 16, 13, 19, 34, 3, 16], freeze: 1 },
+      { name: 'Instruções', rows: help, cols: [120] },
+    ];
     return buildXlsx(sheets);
   }
 
@@ -376,9 +429,19 @@ const GranuloIO = (() => {
       else if (/retid/i.test(h) && !/passa/i.test(h)) mode = 'retida';
       series.push({ j, h, mode });
     }
-    // planilha exportada pelo app: passante + retida → fica só a passante
-    if (series.some(s => s.mode === 'passa') && series.some(s => s.mode === 'retida') && series.length === 2)
-      series = series.filter(s => s.mode === 'passa');
+    // colunas derivadas (planilha do app / modelo): mantém a passante; sem ela, a massa
+    const has = (m) => series.some(s => s.mode === m);
+    if (has('passa') && (has('retida') || has('massa'))) series = series.filter(s => s.mode === 'passa');
+    else if (has('massa') && has('retida')) series = series.filter(s => s.mode === 'massa');
+
+    // massa retida no fundo (linha "Fundo"/"Prato")
+    let fundo = '';
+    for (const r of R) {
+      if (r[0] != null && /fundo|prato/i.test(String(r[0]))) {
+        const col = series.find(s => s.mode === 'massa');
+        if (col && isNum(r[col.j])) fundo = String(C.toNum(r[col.j])).replace('.', ',');
+      }
+    }
 
     const generic = /^(%|porcentagem|massa|peso|passa|retid|diâmetro|diametro)/i;
     const fmt = (n) => String(Number(Number(n).toPrecision(10))).replace('.', ',');
@@ -387,7 +450,7 @@ const GranuloIO = (() => {
       if (series.length === 1) name = (s.h && !generic.test(s.h)) ? s.h : sheetName;
       else name = (s.h && !generic.test(s.h)) ? s.h : `${sheetName} ${k + 1}`;
       return {
-        name, mode: s.mode,
+        name, mode: s.mode, fundo: s.mode === 'massa' ? fundo : '',
         rows: data.filter(r => isNum(r[s.j])).map(r => ({ d: fmt(C.toNum(r[0]) * dScale), v: fmt(C.toNum(r[s.j])) })),
       };
     });
@@ -400,7 +463,7 @@ const GranuloIO = (() => {
       const sheets = await readXlsx(await file.arrayBuffer());
       const all = [];
       for (const sh of sheets) {
-        if (/^(resumo|gr[aá]fico)$/i.test(sh.name)) continue;
+        if (/^(resumo|gr[aá]fico|instru[cç][oõ]es)$/i.test(sh.name)) continue;
         all.push(...rowsToEnsaios(sh.rows, sh.name));
       }
       return all;
@@ -413,7 +476,7 @@ const GranuloIO = (() => {
     return rowsToEnsaios(parseText(txt), base);
   }
 
-  return { buildXlsx, buildReport, readXlsx, parseText, rowsToEnsaios, importFile, zipStore, crc32 };
+  return { buildXlsx, buildReport, buildTemplate, readXlsx, parseText, rowsToEnsaios, importFile, zipStore, crc32 };
 })();
 
 if (typeof module !== 'undefined' && module.exports) module.exports = GranuloIO;

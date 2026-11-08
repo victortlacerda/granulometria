@@ -113,7 +113,11 @@
 <dialog id="dlgPaste">
   <form method="dialog" id="pasteForm">
     <h3>Colar dados do Excel ou CSV</h3>
-    <p class="hint">Copie as células no Excel (diâmetro na 1ª coluna e % passante, % retida ou massa retida nas seguintes) e cole abaixo. Várias colunas viram vários ensaios. O cabeçalho é opcional.</p>
+    <div class="tpl">
+      <div><b>Ainda não tem a planilha?</b><span>Baixe o modelo com as peneiras padrão já preenchidas. Você só digita as massas retidas (ou o % passante) nas células amarelas.</span></div>
+      <button class="btn primary sm" type="button" id="btnTemplate"><svg class="i"><use href="#i-xls"/></svg>Baixar planilha modelo</button>
+    </div>
+    <p class="hint">Depois de preencher: copie as colunas de <b>Diâmetro</b> e <b>% passante</b> no Excel e cole abaixo (ou use <b>Importar arquivo</b> com o .xlsx). Várias colunas viram vários ensaios; o cabeçalho é opcional.</p>
     <textarea id="pasteText" placeholder="Diâmetro (mm)&#9;% Passante&#10;4,75&#9;100&#10;2&#9;85&#10;0,6&#9;52&#10;0,075&#9;12" spellcheck="false"></textarea>
     <div class="dlg-msg" id="pasteMsg"></div>
     <div class="dlg-foot">

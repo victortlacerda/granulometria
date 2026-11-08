@@ -1,0 +1,216 @@
+<div class="theory">
+<nav class="tnav" id="tnav" aria-label="Índice da teoria">
+  <a href="#t-visao">Visão geral</a>
+  <a href="#t-peneiramento">1 · Peneiramento</a>
+  <a href="#t-curva">2 · Curva granulométrica</a>
+  <a href="#t-sedimentacao">3 · Sedimentação</a>
+  <a href="#t-coef">4 · Cu e Cc</a>
+  <a href="#t-tipos">5 · Tipos de curva</a>
+  <a href="#t-fracoes">6 · Frações e peneiras</a>
+  <a href="#t-sucs">7 · Classificação SUCS</a>
+  <a href="#t-aplic">8 · Aplicações práticas</a>
+  <a href="#t-uso">Como usar o app</a>
+  <a href="#t-refs">Referências</a>
+</nav>
+
+<div class="tbody">
+
+<section class="card sec" id="t-visao">
+  <h2>Visão geral</h2>
+  <p>A <b>análise granulométrica</b> determina como as partículas de um solo se distribuem por tamanho. O resultado é a <b>curva granulométrica</b>, uma espécie de “assinatura” do solo: dela saem os diâmetros característicos (D<sub>10</sub>, D<sub>30</sub>, D<sub>60</sub>), os coeficientes de uniformidade e de curvatura e as primeiras pistas sobre compactação, permeabilidade e comportamento mecânico.</p>
+  <div class="flow">
+    <div><b>1 · Peneiramento</b>Fração grossa: pedregulhos e areias (&gt; 0,075 mm).</div>
+    <div><b>2 · Sedimentação</b>Fração fina: silte e argila (&lt; 0,075 mm), pela Lei de Stokes.</div>
+    <div><b>3 · Curva</b>% passante × diâmetro, em escala semilogarítmica.</div>
+    <div><b>4 · Coeficientes</b>D<sub>10</sub>, D<sub>30</sub>, D<sub>60</sub> → C<sub>u</sub> e C<sub>c</sub>.</div>
+    <div><b>5 · Uso</b>Graduação, classificação (SUCS), projeto e controle.</div>
+  </div>
+</section>
+
+<section class="card sec" id="t-peneiramento">
+  <h2>1 · Peneiramento — fração grossa</h2>
+  <p><b>Princípio do método.</b> A amostra seca passa por um conjunto de peneiras padronizadas (série ASTM ou ABNT) empilhadas verticalmente: do topo (malha mais aberta) até a base (malha mais fechada), com um prato coletor no fundo. Agita-se o conjunto e pesa-se o material retido em cada peneira.</p>
+  <h3>Sequência típica de peneiras</h3>
+  <div id="sieveTable"></div>
+  <div class="callout"><b>Limite inferior do peneiramento.</b> A peneira nº 200 (0,075 mm) é o limite físico do ensaio: separa a fração grossa (pedregulhos e areias &gt; 0,075 mm) da fração fina (&lt; 0,075 mm), que só pode ser caracterizada por sedimentação.</div>
+  <h3>Cálculos</h3>
+  <p>Com M<sub>i</sub> a massa retida na peneira <i>i</i> e M<sub>t</sub> a massa total ensaiada (soma das retidas mais o fundo):</p>
+  <div class="eq">
+    <math display="block"><mrow><msub><mi>%R</mi><mi>i</mi></msub><mo>=</mo><mfrac><msub><mi>M</mi><mi>i</mi></msub><msub><mi>M</mi><mi>t</mi></msub></mfrac><mo>×</mo><mn>100</mn></mrow></math>
+    <math display="block"><mrow><msub><mi>%R</mi><mrow><mi>ac</mi><mo>,</mo><mi>i</mi></mrow></msub><mo>=</mo><munderover><mo>∑</mo><mrow><mi>j</mi><mo>=</mo><mn>1</mn></mrow><mi>i</mi></munderover><msub><mi>%R</mi><mi>j</mi></msub></mrow></math>
+    <math display="block"><mrow><msub><mi>%P</mi><mi>i</mi></msub><mo>=</mo><mn>100</mn><mo>−</mo><msub><mi>%R</mi><mrow><mi>ac</mi><mo>,</mo><mi>i</mi></mrow></msub></mrow></math>
+    <span class="cap">% retida, % retida acumulada e % passante (que passa) na peneira i</span>
+  </div>
+  <p>No app, use o modo <b>Massa retida (g)</b>: digite a massa de cada peneira e a do fundo, e o % passante é calculado automaticamente. A soma das massas retidas deve fechar com a massa inicial (a diferença é, em geral, muito pequena).</p>
+</section>
+
+<section class="card sec" id="t-curva">
+  <h2>2 · A curva granulométrica</h2>
+  <p>É a representação gráfica da distribuição das partículas por tamanho, traçada em <b>papel semilogarítmico</b>: o eixo horizontal mostra o diâmetro em <b>escala logarítmica</b> e o eixo vertical a porcentagem em escala aritmética.</p>
+  <h3>Por que escala logarítmica?</h3>
+  <ul>
+    <li>Representa uma faixa enorme de tamanhos (0,001 mm a 100 mm) em um único gráfico.</li>
+    <li>Dá igual importância visual a todas as frações granulométricas.</li>
+    <li>Facilita identificar descontinuidades e avaliar a uniformidade.</li>
+  </ul>
+  <div class="two">
+    <div class="app-card"><h4>% de massa que passa (% passante)</h4><p>Percentual acumulado de material que passa através de cada peneira. Começa em 100% (todo material passa pela maior peneira) e decresce com o diâmetro. É o padrão mais comum na geotecnia brasileira — eixo esquerdo do gráfico.</p></div>
+    <div class="app-card"><h4>% de massa retida acumulada</h4><p>Percentual acumulado retido em cada peneira. Começa em 0% e cresce com a diminuição do diâmetro. Comum em normas americanas (ASTM) e no controle de agregados — eixo direito do gráfico. Os dois eixos somam sempre 100%.</p></div>
+  </div>
+  <h3>Lendo um diâmetro característico</h3>
+  <p>D<sub>P</sub> é o diâmetro correspondente a P% passante. Entre dois pontos medidos (D<sub>1</sub>, P<sub>1</sub>) e (D<sub>2</sub>, P<sub>2</sub>), o app interpola linearmente o % passante contra log D — exatamente o que se faz “no olho” sobre o papel semilog:</p>
+  <div class="eq">
+    <math display="block"><mrow><mi>log</mi><msub><mi>D</mi><mi>P</mi></msub><mo>=</mo><mi>log</mi><msub><mi>D</mi><mn>1</mn></msub><mo>+</mo><mfrac><mrow><mi>P</mi><mo>−</mo><msub><mi>P</mi><mn>1</mn></msub></mrow><mrow><msub><mi>P</mi><mn>2</mn></msub><mo>−</mo><msub><mi>P</mi><mn>1</mn></msub></mrow></mfrac><mo>·</mo><mo stretchy="false">(</mo><mi>log</mi><msub><mi>D</mi><mn>2</mn></msub><mo>−</mo><mi>log</mi><msub><mi>D</mi><mn>1</mn></msub><mo stretchy="false">)</mo></mrow></math>
+    <span class="cap">interpolação log-linear</span>
+  </div>
+  <div class="callout warn">Se a curva não chega a 10% passante (por exemplo, o ensaio parou na peneira nº 200 com 25% de finos), D<sub>10</sub> <b>não pode ser lido</b> — é preciso complementar com a sedimentação. O app avisa nesses casos em vez de extrapolar.</div>
+</section>
+
+<section class="card sec" id="t-sedimentacao">
+  <h2>3 · Sedimentação — fração fina</h2>
+  <p>O ensaio de sedimentação caracteriza quantitativamente as partículas de <b>silte e argila</b> (fração fina &lt; 0,075 mm). Usa a <b>Lei de Stokes</b> para determinar o diâmetro equivalente das partículas em suspensão a partir da medição da sua velocidade de sedimentação.</p>
+  <h3>Lei de Stokes — equação fundamental</h3>
+  <p>Para partículas esféricas em regime laminar (Re &lt; 1):</p>
+  <div class="eq">
+    <math display="block"><mrow><mi>v</mi><mo>=</mo><mfrac><mrow><mo stretchy="false">(</mo><msub><mi>γ</mi><mi>s</mi></msub><mo>−</mo><msub><mi>γ</mi><mi>w</mi></msub><mo stretchy="false">)</mo><mo>·</mo><msup><mi>D</mi><mn>2</mn></msup></mrow><mrow><mn>18</mn><mo>·</mo><mi>μ</mi></mrow></mfrac></mrow></math>
+    <math display="block"><mrow><mi>D</mi><mo>=</mo><msqrt><mfrac><mrow><mn>18</mn><mo>·</mo><mi>μ</mi><mo>·</mo><mi>v</mi></mrow><mrow><msub><mi>γ</mi><mi>s</mi></msub><mo>−</mo><msub><mi>γ</mi><mi>w</mi></msub></mrow></mfrac></msqrt><mo>,</mo><mspace width="1em"/><mi>v</mi><mo>=</mo><mfrac><mi>H</mi><mi>t</mi></mfrac></mrow></math>
+  </div>
+  <ul>
+    <li><i>v</i> = velocidade de sedimentação; <i>H</i> = altura de queda (profundidade efetiva de leitura do densímetro) e <i>t</i> = tempo decorrido;</li>
+    <li>γ<sub>s</sub> e γ<sub>w</sub> = pesos específicos dos sólidos e da água; μ = viscosidade dinâmica da água (depende da temperatura);</li>
+    <li><i>D</i> = diâmetro da esfera equivalente que cai com a mesma velocidade.</li>
+  </ul>
+  <p>Quanto <b>menor</b> a partícula, <b>mais devagar</b> ela decanta (v ∝ D²): por isso as leituras vão de segundos a 24 horas.</p>
+  <h3>O densímetro</h3>
+  <p>É o instrumento que mede a densidade da suspensão solo–água ao longo do tempo. A densidade a uma profundidade H, no instante t, diz quanto sólido ainda está em suspensão — ou seja, a porcentagem de partículas <i>menores</i> que o diâmetro D de Stokes correspondente. A amostra é previamente dispersa com defloculante (hexametafosfato de sódio) para que os grãos decantem isolados. As leituras típicas são feitas em 0,5; 1; 2; 4; 8; 15 e 30 min e em 1; 2; 4; 8 e 24 h.</p>
+  <div class="callout warn">Hipóteses da Lei de Stokes: partículas esféricas, regime laminar, suspensão diluída. Abaixo de cerca de 0,001 mm o movimento browniano e a floculação passam a dominar; por isso a escala do gráfico é limitada em ≈ 0,001 mm.</div>
+
+  <h3>Simulador de Stokes</h3>
+  <p>Veja quanto tempo um grão de cada diâmetro leva para cair a altura H na água à temperatura informada:</p>
+  <div class="calc-box">
+    <label class="field"><span>Densidade dos grãos G<sub>s</sub></span><input class="in" id="stG" inputmode="decimal" value="2,65"></label>
+    <label class="field"><span>Temperatura da água (°C)</span><input class="in" id="stT" inputmode="decimal" value="20"></label>
+    <label class="field"><span>Altura de queda H (cm)</span><input class="in" id="stH" inputmode="decimal" value="10"></label>
+  </div>
+  <div class="tscroll"><table class="tbl" id="stTable"></table></div>
+  <p class="hint" id="stNote"></p>
+</section>
+
+<section class="card sec" id="t-coef">
+  <h2>4 · Coeficientes granulométricos</h2>
+  <p>São parâmetros adimensionais calculados a partir dos diâmetros característicos (D<sub>10</sub>, D<sub>30</sub>, D<sub>60</sub>) que quantificam a forma e a distribuição da curva — essenciais para a classificação de solos. D<sub>10</sub> é também chamado de <b>diâmetro efetivo</b>.</p>
+  <div class="two">
+    <div>
+      <h3>Coeficiente de uniformidade (C<sub>u</sub>)</h3>
+      <div class="eq"><math display="block"><mrow><msub><mi>C</mi><mi>u</mi></msub><mo>=</mo><mfrac><msub><mi>D</mi><mn>60</mn></msub><msub><mi>D</mi><mn>10</mn></msub></mfrac></mrow></math></div>
+      <p>Mede a <b>amplitude</b> da distribuição, indicando a variação de tamanhos de partículas.</p>
+      <ul>
+        <li><b>C<sub>u</sub> &lt; 5:</b> solo mal graduado (muito uniforme)</li>
+        <li><b>C<sub>u</sub> = 5 a 15:</b> uniformidade média</li>
+        <li><b>C<sub>u</sub> &gt; 15:</b> solo bem graduado (heterogêneo)</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Coeficiente de curvatura (C<sub>c</sub>)</h3>
+      <div class="eq"><math display="block"><mrow><msub><mi>C</mi><mi>c</mi></msub><mo>=</mo><mfrac><msubsup><mi>D</mi><mn>30</mn><mn>2</mn></msubsup><mrow><msub><mi>D</mi><mn>10</mn></msub><mo>×</mo><msub><mi>D</mi><mn>60</mn></msub></mrow></mfrac></mrow></math></div>
+      <p>Avalia a <b>forma</b> da curva, indicando se a distribuição é contínua e harmônica.</p>
+      <ul>
+        <li><b>1 ≤ C<sub>c</sub> ≤ 3:</b> solo bem graduado</li>
+        <li><b>Fora dessa faixa:</b> solo mal graduado</li>
+      </ul>
+    </div>
+  </div>
+  <h3>Exemplo resolvido (da aula)</h3>
+  <p>Curva vermelha lida no gráfico: D<sub>10</sub> = 0,2 mm, D<sub>30</sub> ≈ 0,6 mm e D<sub>60</sub> ≈ 1,8 mm.</p>
+  <div class="eq">
+    <math display="block"><mrow><msub><mi>C</mi><mi>u</mi></msub><mo>=</mo><mfrac><mrow><mn>1,8</mn></mrow><mrow><mn>0,2</mn></mrow></mfrac><mo>=</mo><mn>9</mn><mspace width="1.5em"/><msub><mi>C</mi><mi>c</mi></msub><mo>=</mo><mfrac><msup><mn>0,6</mn><mn>2</mn></msup><mrow><mn>0,2</mn><mo>×</mo><mn>1,8</mn></mrow></mfrac><mo>=</mo><mfrac><mn>0,36</mn><mn>0,36</mn></mfrac><mo>=</mo><mn>1,0</mn></mrow></math>
+    <span class="cap">C<sub>u</sub> = 9 → uniformidade média · C<sub>c</sub> = 1,0 → dentro de 1–3 (curva harmônica)</span>
+  </div>
+  <button class="btn" id="btnLesson"><svg class="i"><use href="#i-flask"/></svg>Abrir este exemplo no app</button>
+  <div class="callout" style="margin-top:12px"><b>Por que os dois coeficientes?</b> C<sub>u</sub> sozinho não basta: um solo com patamar horizontal (graduação aberta) pode ter C<sub>u</sub> enorme e, ainda assim, faltar uma faixa inteira de tamanhos — o C<sub>c</sub> fora de 1–3 denuncia isso. Pelo critério SUCS, <b>bem graduado</b> exige 1 ≤ C<sub>c</sub> ≤ 3 e C<sub>u</sub> ≥ 4 (pedregulhos) ou C<sub>u</sub> ≥ 6 (areias); é o critério usado como “graduação” final no app.</div>
+</section>
+
+<section class="card sec" id="t-tipos">
+  <h2>5 · Lendo o formato da curva</h2>
+  <div class="cards3">
+    <div class="mini" style="--c:#2563eb"><h4 style="color:#2563eb">Curva azul — solo uniforme</h4>
+      <svg class="mc" data-mini="ex-uniforme" viewBox="0 0 260 130"></svg>
+      <div class="grains" aria-hidden="true"><i style="width:22px;height:22px"></i><i style="width:22px;height:21px"></i><i style="width:21px;height:22px"></i><i style="width:22px;height:20px"></i><i style="width:20px;height:22px"></i><i style="width:22px;height:22px"></i></div>
+      <ul><li><b>Curva:</b> quase vertical, íngreme.</li><li><b>Distribuição:</b> grãos de tamanhos muito similares.</li><li><b>Comportamento:</b> baixa compactação, alta permeabilidade (bom para filtros).</li></ul></div>
+    <div class="mini" style="--c:#16a34a"><h4 style="color:#16a34a">Curva verde — solo bem graduado</h4>
+      <svg class="mc" data-mini="ex-bem" viewBox="0 0 260 130"></svg>
+      <div class="grains" aria-hidden="true"><i style="width:28px;height:26px"></i><i style="width:22px;height:21px"></i><i style="width:17px;height:16px"></i><i style="width:13px;height:12px"></i><i style="width:9px;height:9px"></i><i style="width:6px;height:6px"></i><i style="width:4px;height:4px"></i></div>
+      <ul><li><b>Curva:</b> diagonal suave e contínua.</li><li><b>Distribuição:</b> ampla e contínua de grãos.</li><li><b>Comportamento:</b> alta compactação, resistência e estabilidade.</li></ul></div>
+    <div class="mini" style="--c:#dc2626"><h4 style="color:#dc2626">Curva vermelha — graduação aberta</h4>
+      <svg class="mc" data-mini="ex-aberta" viewBox="0 0 260 130"></svg>
+      <div class="grains" aria-hidden="true"><i style="width:28px;height:26px"></i><i style="width:22px;height:21px"></i><i style="width:4px;height:4px;margin-left:30px"></i><i style="width:4px;height:4px"></i></div>
+      <ul><li><b>Curva:</b> patamar horizontal.</li><li><b>Distribuição:</b> ausência de frações intermediárias.</li><li><b>Comportamento:</b> estrutura instável, difícil compactação.</li></ul></div>
+  </div>
+  <p style="margin-top:12px">O app detecta a graduação aberta procurando um trecho interior da curva (entre 10% e 95% passante) que se estende por pelo menos uma década de diâmetros com inclinação de, no máximo, 5 pontos percentuais por década.</p>
+</section>
+
+<section class="card sec" id="t-fracoes">
+  <h2>6 · Frações do solo e peneiras limite</h2>
+  <p>As fronteiras entre pedregulho, areia, silte e argila dependem da norma adotada. Alterne o sistema no gráfico (ABNT NBR 6502 ou SUCS/ASTM) — as faixas, as linhas dos limites e a composição acompanham.</p>
+  <div id="fracTables"></div>
+  <div class="callout">Abaixo de 0,075 mm não há peneira prática: a distribuição de <b>silte e argila</b> vem do <b>ensaio de sedimentação</b>. O limite argila/silte (0,002 mm) só é medido por sedimentação.</div>
+</section>
+
+<section class="card sec" id="t-sucs">
+  <h2>7 · Classificação SUCS preliminar</h2>
+  <p>Só com a granulometria é possível uma classificação <b>preliminar</b> pelo Sistema Unificado (SUCS, ASTM D2487). O app usa as porcentagens de pedregulho (&gt; 4,75 mm), areia (4,75 a 0,075 mm) e finos (&lt; 0,075 mm):</p>
+  <div class="tscroll"><table class="tbl" style="min-width:520px">
+    <tr><th>Finos (&lt; 0,075 mm)</th><th>Resultado</th></tr>
+    <tr><td>&lt; 5%</td><td>GW/GP (pedregulho) ou SW/SP (areia): <b>W</b> se C<sub>u</sub> ≥ 4 (G) ou ≥ 6 (S) e 1 ≤ C<sub>c</sub> ≤ 3; senão <b>P</b></td></tr>
+    <tr><td>5% a 12%</td><td>Símbolo duplo (ex.: GW-GM, SP-SC) — M ou C depende da plasticidade</td></tr>
+    <tr><td>&gt; 12% e &lt; 50%</td><td>GM/GC ou SM/SC — M (silte) ou C (argila) depende de LL e IP</td></tr>
+    <tr><td>≥ 50%</td><td>Solo fino (ML, CL, MH, CH…) — exige limites de Atterberg e Carta de Plasticidade</td></tr>
+  </table></div>
+  <p>G = pedregulho, S = areia, W = bem graduado, P = mal graduado, M = silte, C = argila. A letra G ou S é a fração predominante na parte grossa.</p>
+</section>
+
+<section class="card sec" id="t-aplic">
+  <h2>8 · Aplicações práticas</h2>
+  <div class="cards3">
+    <div class="app-card"><h4>Aterros e terraplenagem</h4><p>Solos bem graduados atingem maior massa específica seca na compactação e maior resistência; a curva ajuda a escolher jazidas de empréstimo e a prever a facilidade de compactação.</p></div>
+    <div class="app-card"><h4>Pavimentação</h4><p>Bases, sub-bases e reforços são especificados por <b>faixas granulométricas</b>: a curva do material precisa “caber” dentro da faixa de projeto. Misturas de dois ou mais solos corrigem a graduação.</p></div>
+    <div class="app-card"><h4>Filtros e drenos</h4><p>Critério de Terzaghi: D<sub>15</sub>(filtro)/D<sub>85</sub>(solo) &lt; 5 (retém o solo) e D<sub>15</sub>(filtro)/D<sub>15</sub>(solo) &gt; 5 (drena). Solos uniformes e limpos são bons filtros.</p></div>
+    <div class="app-card"><h4>Permeabilidade (Hazen)</h4><p>Para areias limpas, k ≈ C·D<sub>10</sub>² (D<sub>10</sub> em cm, k em cm/s, C ≈ 100), válida para 0,1 mm &lt; D<sub>10</sub> &lt; 3 mm e C<sub>u</sub> &lt; 5. O app exibe essa estimativa quando aplicável.</p></div>
+    <div class="app-card"><h4>Barragens e erosão interna</h4><p>Solos de graduação aberta (curva com patamar) podem perder a fração fina carregada pela água entre os grãos grossos — risco de erosão interna. A curva é o primeiro teste de suscetibilidade.</p></div>
+    <div class="app-card"><h4>Liquefação de areias</h4><p>Areias finas, uniformes (C<sub>u</sub> baixo), fofas e saturadas são as mais suscetíveis à liquefação sob carregamento cíclico (sismos, vibrações).</p></div>
+    <div class="app-card"><h4>Agregados e concreto</h4><p>A granulometria de areias e britas, com o % retido acumulado, define o módulo de finura e o enquadramento nas zonas granulométricas — daí o eixo direito do gráfico.</p></div>
+    <div class="app-card"><h4>Classificação e projeto</h4><p>SUCS e TRB/AASHTO partem da granulometria; correlações empíricas ligam D<sub>10</sub>, C<sub>u</sub> e % de finos a permeabilidade, ângulo de atrito, suscetibilidade ao gelo e capilaridade.</p></div>
+    <div class="app-card"><h4>Estabilização granulométrica</h4><p>Compare no app as curvas de dois solos e de uma mistura prevista: a combinação de um solo grosso com um fino pode “fechar” o patamar e gerar um material bem graduado.</p></div>
+  </div>
+</section>
+
+<section class="card sec" id="t-uso">
+  <h2>Como usar o app</h2>
+  <ol class="steps">
+    <li><b>Escolha ou crie um ensaio.</b> Há três exemplos prontos (bem graduado, uniforme e graduação aberta). Use <b>Novo</b> para começar do zero com as peneiras padrão.</li>
+    <li><b>Digite os dados.</b> Informe o diâmetro (mm) e o % passante, % retida acumulada ou a massa retida (g) de cada peneira. Use vírgula ou ponto. Para a fração fina, adicione os pontos da sedimentação (0,05; 0,02; 0,005; 0,002 mm…). A curva é traçada a cada digitação.</li>
+    <li><b>Ou importe.</b> Cole direto do Excel, abra um .xlsx/.csv, ou arraste o arquivo para a tela. Várias colunas viram vários ensaios.</li>
+    <li><b>Compare.</b> Cada ensaio tem sua cor; o olho na lista mostra ou oculta a curva. Passe o mouse (ou toque) sobre o gráfico para ver o % passante e o % retido de todas as curvas.</li>
+    <li><b>Ative as guias.</b> Marque D<sub>10</sub>, D<sub>30</sub> e D<sub>60</sub> para ver as linhas horizontal e vertical até a curva; marque <i>Limites das frações</i> para ver as separações e as peneiras correspondentes.</li>
+    <li><b>Exporte.</b> PNG do gráfico, ou planilha Excel com os dados, os coeficientes (com fórmulas) e a imagem do gráfico.</li>
+  </ol>
+  <p class="hint">Os dados ficam salvos apenas neste navegador (localStorage); nada é enviado para servidores.</p>
+</section>
+
+<section class="card sec" id="t-refs">
+  <h2>Referências</h2>
+  <ul class="refs">
+    <li>ABNT NBR 7181 — Solo: análise granulométrica.</li>
+    <li>ABNT NBR 6502 — Rochas e solos: terminologia.</li>
+    <li>ASTM D6913 — Particle-size distribution (gradation) of soils using sieve analysis.</li>
+    <li>ASTM D7928 — Particle-size distribution of fine-grained soils using the sedimentation (hydrometer) analysis.</li>
+    <li>ASTM D2487 — Classification of soils for engineering purposes (Unified Soil Classification System).</li>
+    <li>PINTO, C. S. <i>Curso básico de mecânica dos solos</i>. Oficina de Textos.</li>
+    <li>DAS, B. M. <i>Fundamentos de engenharia geotécnica</i>. Cengage.</li>
+    <li>Material de aula — Pós-graduação PUC Minas (peneiramento, curva granulométrica, sedimentação e coeficientes).</li>
+  </ul>
+  <p class="hint">As classificações do app são uma ferramenta de apoio ao estudo e à triagem; decisões de projeto devem seguir as normas vigentes e o julgamento do engenheiro responsável.</p>
+</section>
+
+</div>
+</div>

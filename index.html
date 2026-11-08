@@ -1,0 +1,2358 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Granulometria — curva, Cu e Cc dos solos</title>
+<meta name="description" content="Plote a curva granulométrica, calcule D10, D30, D60, Cu e Cc e classifique solos. Funciona no navegador e no celular, sem instalar nada.">
+<meta name="theme-color" content="#f2f6fb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Granulometria">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232f80c9'/%3E%3Cpath d='M10 50C22 50 24 44 30 34S42 14 54 14' fill='none' stroke='%23fff' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f2f6fb; --card:#fff; --ink:#18263a; --ink2:#41536b; --muted:#6b7b91;
+  --line:#dde5ef; --line2:#eaf0f6;
+  --brand:#2f80c9; --brand-d:#1f6aae; --brand-l:#e8f2fc;
+  --ok:#17803d; --ok-bg:#e4f5ea; --warn:#a85a07; --warn-bg:#fdf0dc;
+  --bad:#b42323; --bad-bg:#fde8e8; --info:#1d5fa8; --info-bg:#e6f0fb; --mut-bg:#eef2f7;
+  --r:14px; --sh:0 1px 2px rgba(24,38,58,.05),0 6px 20px rgba(24,38,58,.06);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-variant-numeric:tabular-nums}
+body.noscroll{overflow:hidden}
+h1,h2,h3,h4{line-height:1.25;margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* ---------- topo ---------- */
+.top{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.88);backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--line)}
+.top-in{max-width:1500px;margin:0 auto;padding:10px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+.brand svg{width:34px;height:34px}
+.brand b{font-size:17px;letter-spacing:-.01em}
+.brand small{display:block;color:var(--muted);font-size:12px;margin-top:-2px}
+.tabs{display:flex;background:var(--mut-bg);border-radius:12px;padding:3px;gap:2px}
+.tabs button{border:0;background:none;padding:7px 18px;border-radius:9px;font-weight:600;color:var(--ink2);cursor:pointer}
+.tabs button[aria-selected=true]{background:#fff;color:var(--brand-d);box-shadow:0 1px 3px rgba(24,38,58,.12)}
+
+.wrap{max-width:1500px;margin:0 auto;padding:18px}
+
+/* ---------- cartões e botões ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:16px}
+.card-h{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.card-h h2{font-size:16px;margin-right:auto}
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;font-weight:600;font-size:14px;color:var(--ink2);cursor:pointer;transition:background .15s,border-color .15s,transform .05s;white-space:nowrap}
+.btn:hover{background:var(--brand-l);border-color:#bcd7ef;color:var(--brand-d)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-d);border-color:var(--brand-d);color:#fff}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn.icon{padding:7px}
+.btn.danger:hover{background:var(--bad-bg);border-color:#f2b8b8;color:var(--bad)}
+.btn:focus-visible,.chip:focus-visible,.tabs button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px}
+
+/* ---------- layout da análise ---------- */
+.app{display:grid;grid-template-columns:minmax(310px,370px) minmax(0,1fr);gap:18px;align-items:start}
+.col{display:flex;flex-direction:column;gap:18px;min-width:0}
+@media (max-width:1000px){
+  .app{display:flex;flex-direction:column;gap:16px;align-items:stretch}
+  .col{display:contents}
+  .chart-card{order:1}.list-card{order:2}.editor-card{order:3}.results{order:4}
+  .wrap{padding:12px}
+  .top-in{padding:8px 12px}
+  .brand small{display:none}
+  .tabs{width:100%}.tabs button{flex:1}
+}
+
+/* ---------- lista de ensaios ---------- */
+.elist{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:6px}
+.en{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;cursor:pointer;background:#fff;transition:border-color .15s,background .15s}
+.en:hover{background:#f8fbfe}
+.en.sel{border-color:var(--brand);background:var(--brand-l);box-shadow:0 0 0 1px var(--brand) inset}
+.en .dot{width:22px;height:22px;border-radius:50%;border:3px solid var(--c);background:var(--c);cursor:pointer;padding:0;flex:none;transition:background .15s}
+.en.off .dot{background:#fff}
+.en.off .meta{opacity:.55}
+.en .meta{min-width:0;flex:1}
+.en .meta b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.en .meta small{color:var(--muted);font-size:12.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tone-ok{color:var(--ok)}.tone-warn{color:var(--warn)}.tone-bad{color:var(--bad)}.tone-info{color:var(--info)}.tone-muted{color:var(--muted)}
+
+/* ---------- editor ---------- */
+.field{display:block;margin-bottom:12px}
+.field>span{display:block;font-size:12.5px;font-weight:600;color:var(--ink2);margin-bottom:4px}
+.in{width:100%;height:38px;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:#fff;font-size:15px}
+.in:focus{border-color:var(--brand)}
+.in.warn{border-color:#e7a33e;background:#fffaf0}
+select.in{padding-right:6px}
+.swatches{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.swatches button{width:24px;height:24px;border-radius:50%;border:2px solid #fff;background:var(--c);box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}
+.swatches button[aria-pressed=true]{box-shadow:0 0 0 2px var(--c)}
+.seg{display:flex;background:var(--mut-bg);border-radius:10px;padding:3px;gap:2px;margin-bottom:6px}
+.seg button{flex:1;border:0;background:none;padding:6px 4px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer}
+.seg button[aria-pressed=true]{background:#fff;color:var(--brand-d);box-shadow:0 1px 3px rgba(24,38,58,.12)}
+.hint{font-size:12.5px;color:var(--muted);margin:0 0 10px}
+.rows .r{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 30px;gap:6px;margin-bottom:6px;align-items:center}
+.rows.massa .r{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 64px 30px}
+.rows .rh{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.rows .rh span{padding-left:4px}
+.cell{position:relative}
+.cell .tag{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11.5px;color:var(--brand-d);background:var(--brand-l);border-radius:6px;padding:1px 6px;pointer-events:none}
+.cell .tag.sed{color:#8a4b0f;background:var(--warn-bg)}
+.cell .in.hastag{padding-right:58px}
+.calc{font-size:13px;color:var(--ink2);text-align:right;padding-right:4px}
+.xbtn{border:0;background:none;color:var(--muted);width:30px;height:34px;border-radius:8px;cursor:pointer;font-size:18px;line-height:1}
+.xbtn:hover{background:var(--bad-bg);color:var(--bad)}
+.rows-scroll{max-height:460px;overflow:auto;margin:0 -4px;padding:0 4px}
+.warns{margin:10px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.warns li{font-size:12.5px;background:var(--warn-bg);color:#7a4306;border-radius:8px;padding:6px 10px}
+
+/* ---------- gráfico ---------- */
+.chart-card{padding:14px 14px 10px}
+.chart-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.chart-head h2{font-size:16px;margin-right:auto}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.toolbar .sep{width:1px;height:22px;background:var(--line);margin:0 2px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:13.5px;font-weight:600;color:var(--ink2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:#bcd7ef}
+.chip .ck{width:14px;height:14px;border-radius:4px;border:1.5px solid #b4c3d6;display:grid;place-items:center;background:#fff}
+.chip .ck svg{width:10px;height:10px;stroke:#fff;stroke-width:3.5;opacity:0;fill:none}
+.chip[aria-pressed=true]{background:var(--brand-l);border-color:#9cc6ea;color:var(--brand-d)}
+.chip[aria-pressed=true] .ck{background:var(--brand);border-color:var(--brand)}
+.chip[aria-pressed=true] .ck svg{opacity:1}
+.chip sub{font-size:.72em;vertical-align:baseline;position:relative;top:.25em}
+.sysel{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);font-weight:600}
+.sysel select{height:32px;border:1px solid var(--line);border-radius:999px;padding:0 10px;background:#fff;font-size:13.5px;font-weight:600;color:var(--ink2)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0 0 8px;font-size:13px;color:var(--ink2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:16px;height:4px;border-radius:2px;background:var(--c)}
+.chart-wrap{position:relative;overflow-x:auto;overflow-y:hidden;border-radius:10px}
+.gtip{position:absolute;left:0;top:0;z-index:5;pointer-events:none;background:rgba(255,255,255,.97);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(24,38,58,.18);padding:8px 10px;font-size:12.5px;min-width:180px;max-width:300px}
+.tt-h{font-weight:700;font-size:13.5px;margin-bottom:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tt-h small{width:100%;font-weight:500;color:var(--muted);font-size:12px}
+.tt-chip{font-size:11px;font-weight:600;background:var(--brand-l);color:var(--brand-d);border-radius:6px;padding:1px 6px}
+.tt-chip.sed{background:var(--warn-bg);color:#8a4b0f}
+.tt-row{display:grid;grid-template-columns:10px 1fr;gap:2px 7px;align-items:baseline;margin-top:4px}
+.tt-row i{width:10px;height:10px;border-radius:50%;align-self:center}
+.tt-row b{font-weight:600}
+.tt-row span{grid-column:2;color:var(--ink2)}
+.tt-row em{font-style:normal;font-size:11px;color:var(--ok);font-weight:600}
+.tt-row.muted{color:var(--muted)}
+.chart-card details{margin-top:8px;border-top:1px solid var(--line2);padding-top:8px}
+summary{cursor:pointer;font-weight:600;color:var(--ink2);font-size:14px}
+.fs-hint{display:none;font-size:12.5px;color:var(--muted);margin:4px 0}
+.chart-card.fs{position:fixed;inset:0;z-index:60;border-radius:0;border:0;display:flex;flex-direction:column;padding:10px 14px calc(10px + env(safe-area-inset-bottom))}
+.chart-card.fs .chart-wrap{flex:1;min-height:0;overflow:auto}
+.chart-card.fs details{display:none}
+@media (orientation:portrait){.chart-card.fs .fs-hint{display:block}}
+@media (max-width:560px){.chart-head .btn span.lbl{display:none}}
+
+/* ---------- resultados ---------- */
+.results h2{font-size:16px;margin:0 0 10px}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.res{border-top:4px solid var(--c)}
+.res header{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.res header h3{font-size:15px;margin-right:auto}
+.pill{font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.bad{background:var(--bad-bg);color:var(--bad)}.pill.info{background:var(--info-bg);color:var(--info)}.pill.muted{background:var(--mut-bg);color:var(--muted)}
+.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:12px}
+.metrics .m{grid-column:span 2}
+.metrics .m.half{grid-column:span 3}
+.m{background:#f6f9fc;border:1px solid var(--line2);border-radius:12px;padding:8px 10px;min-width:0}
+.m>span{font-size:12.5px;color:var(--muted);font-weight:600}
+.m>b{display:block;font-size:20px;letter-spacing:-.01em;line-height:1.2}
+.m>small{display:block;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.metrics .m.big{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr;gap:0 12px;align-items:center}
+.m.big>span{grid-row:span 2}
+.m.big>b{font-size:22px}
+.m sub{font-size:.72em;vertical-align:baseline;position:relative;top:.25em}
+.verdict{font-size:14px;color:var(--ink2);margin:0 0 12px}
+.bar{display:flex;height:12px;border-radius:7px;overflow:hidden;background:var(--mut-bg);margin-bottom:6px}
+.bar i{display:block;height:100%}
+.barleg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px;color:var(--ink2);margin-bottom:10px}
+.barleg span{display:inline-flex;align-items:center;gap:5px}
+.barleg i{width:10px;height:10px;border-radius:3px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13.5px;margin:0 0 8px}
+.kv dt{color:var(--muted)}.kv dd{margin:0;font-weight:600}
+.kv dd small{font-weight:400;color:var(--muted);display:block}
+.res details{border-top:1px solid var(--line2);padding-top:8px;margin-top:8px}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th,.tbl td{padding:6px 8px;text-align:left;border-bottom:1px solid var(--line2);vertical-align:top}
+.tbl th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700;background:#f8fafc}
+.tbl td.n,.tbl th.n{text-align:right}
+.tscroll{overflow:auto;border:1px solid var(--line);border-radius:12px;margin-bottom:14px;background:#fff}
+.tscroll .tbl{min-width:760px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--c);margin-right:6px}
+.empty{padding:26px;text-align:center;color:var(--muted)}
+
+/* ---------- toast e diálogo ---------- */
+#toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:100;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:max-content;max-width:92vw}
+.toast{pointer-events:auto;background:#1c2a40;color:#fff;border-radius:12px;padding:10px 14px;display:flex;gap:14px;align-items:center;box-shadow:0 8px 28px rgba(0,0,0,.25);font-size:14px;animation:tin .2s ease-out}
+.toast button{border:0;background:none;color:#8cc4f5;font-weight:700;cursor:pointer;padding:0}
+.toast.err{background:#8f2323}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}}
+dialog{border:0;border-radius:16px;padding:0;box-shadow:0 20px 60px rgba(24,38,58,.35);width:min(560px,94vw);color:var(--ink)}
+dialog::backdrop{background:rgba(24,38,58,.4)}
+dialog form{padding:18px}
+dialog textarea{width:100%;height:200px;border:1px solid var(--line);border-radius:10px;padding:10px;font:13.5px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;resize:vertical}
+dialog h3{margin-bottom:6px}
+.dlg-msg{font-size:13px;color:var(--bad);min-height:20px;margin:6px 0}
+.dlg-foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.drop{outline:3px dashed var(--brand);outline-offset:-8px}
+
+/* ---------- teoria ---------- */
+.theory{display:grid;grid-template-columns:220px minmax(0,1fr);gap:22px;align-items:start}
+.tnav{position:sticky;top:76px;display:flex;flex-direction:column;gap:2px}
+.tnav a{padding:7px 12px;border-radius:9px;color:var(--ink2);text-decoration:none;font-weight:600;font-size:14px}
+.tnav a:hover{background:#fff;color:var(--brand-d)}
+.tnav a.on{background:var(--brand-l);color:var(--brand-d)}
+@media (max-width:1000px){
+  .theory{display:block}
+  .tnav{position:static;flex-direction:row;overflow:auto;margin-bottom:12px;padding-bottom:4px;gap:6px}
+  .tnav a{background:#fff;border:1px solid var(--line);white-space:nowrap}
+}
+.tbody{display:flex;flex-direction:column;gap:18px;min-width:0}
+.sec{scroll-margin-top:84px}
+.sec h2{font-size:21px;margin-bottom:10px;letter-spacing:-.01em}
+.sec h3{font-size:16px;margin:16px 0 6px}
+.sec p{margin:0 0 10px;color:var(--ink2)}
+.sec ul,.sec ol{margin:0 0 10px;padding-left:22px;color:var(--ink2)}
+.sec li{margin-bottom:4px}
+.eq{background:#f6f9fc;border:1px solid var(--line2);border-radius:12px;padding:12px 14px;margin:10px 0;display:flex;flex-direction:column;align-items:center;gap:4px;overflow-x:auto}
+.eq math{font-size:1.5em}
+.eq .cap{font-size:12.5px;color:var(--muted)}
+math{font-family:"Cambria Math","STIX Two Math","Latin Modern Math",serif}
+.callout{border-left:4px solid var(--brand);background:var(--brand-l);border-radius:0 10px 10px 0;padding:10px 14px;margin:10px 0;color:var(--ink2);font-size:14.5px}
+.callout.warn{border-color:#e7a33e;background:var(--warn-bg)}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin:6px 0 12px}
+.flow>div{flex:1 1 150px;background:#f6f9fc;border:1px solid var(--line2);border-radius:12px;padding:10px 12px;font-size:13.5px;position:relative}
+.flow>div b{display:block;font-size:14px;color:var(--brand-d);margin-bottom:2px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.cards3{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.mini{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;border-top:4px solid var(--c)}
+.mini h4{font-size:14.5px;margin-bottom:6px}
+.mini svg.mc{width:100%;height:auto;display:block;margin-bottom:6px;background:#fbfdff;border-radius:8px}
+.mini ul{padding-left:18px;font-size:13.5px;margin:0}
+.grains{display:flex;align-items:flex-end;gap:3px;height:30px;margin:6px 0}
+.grains i{display:block;background:#c79a52;border-radius:40% 55% 45% 50%}
+.app-card{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}
+.app-card h4{font-size:14.5px;margin-bottom:4px;color:var(--brand-d)}
+.app-card p{font-size:13.5px;margin:0}
+.calc-box{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:8px 0 12px}
+ol.steps{counter-reset:s;list-style:none;padding:0}
+ol.steps li{counter-increment:s;position:relative;padding-left:38px;margin-bottom:10px}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;background:var(--brand);color:#fff;font-weight:700;font-size:13px;display:grid;place-items:center}
+.refs li{font-size:13.5px}
+
+/* evita que tabelas largas alarguem a página no celular */
+.app>*,.col>*,.results,.card{min-width:0}
+body{overflow-x:hidden}
+
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-max" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-img" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></symbol>
+  <symbol id="i-xls" viewBox="0 0 24 24"><path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 10h18M3 15h18M9 3v18"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><path d="M9 9h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2zM5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 15V3m0 0 4 4m-4-4L8 7M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></symbol>
+  <symbol id="i-clip" viewBox="0 0 24 24"><path d="M9 4h6v3H9zM7 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+  <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6L4.5 19a2 2 0 0 0 1.8 3h11.4a2 2 0 0 0 1.8-3L14 9V3M7.5 15h9"/></symbol>
+</svg>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#2f80c9"/><path d="M10 50C22 50 24 44 30 34S42 14 54 14" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><circle cx="30" cy="34" r="4.5" fill="#fff"/></svg>
+      <div><b>Granulometria</b><small>Curva granulométrica · Cu · Cc · classificação</small></div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Seções">
+      <button role="tab" id="tab-app" aria-selected="true" aria-controls="view-app">Análise</button>
+      <button role="tab" id="tab-theory" aria-selected="false" aria-controls="view-theory">Teoria e aplicações</button>
+    </nav>
+  </div>
+</header>
+
+<!-- ============================ ANÁLISE ============================ -->
+<main class="wrap" id="view-app" role="tabpanel" aria-labelledby="tab-app">
+ <div class="app">
+  <div class="col">
+    <section class="card list-card" aria-labelledby="h-ens">
+      <div class="card-h">
+        <h2 id="h-ens">Ensaios</h2>
+        <button class="btn primary sm" id="btnNew"><svg class="i"><use href="#i-plus"/></svg>Novo</button>
+      </div>
+      <ul class="elist" id="elist"></ul>
+      <div class="btnrow">
+        <button class="btn sm" id="btnImport" title="Abrir arquivo .xlsx, .csv ou .txt"><svg class="i"><use href="#i-up"/></svg>Importar arquivo</button>
+        <button class="btn sm" id="btnPaste" title="Colar tabela copiada do Excel"><svg class="i"><use href="#i-clip"/></svg>Colar do Excel</button>
+        <button class="btn sm" id="btnExamples" title="Adicionar os 3 exemplos padrão"><svg class="i"><use href="#i-flask"/></svg>Exemplos</button>
+      </div>
+      <input type="file" id="fileIn" accept=".xlsx,.xlsm,.csv,.tsv,.txt,text/csv,text/plain" hidden>
+    </section>
+
+    <section class="card editor-card" id="editor" aria-labelledby="h-ed"></section>
+  </div>
+
+  <div class="col">
+    <section class="card chart-card" id="chartCard" aria-labelledby="h-ch">
+      <div class="chart-head">
+        <h2 id="h-ch">Curva granulométrica</h2>
+        <button class="btn sm" id="btnFs" title="Ampliar o gráfico na tela"><svg class="i"><use href="#i-max"/></svg><span class="lbl">Ampliar</span></button>
+        <button class="btn sm" id="btnPng" title="Baixar o gráfico em PNG"><svg class="i"><use href="#i-img"/></svg><span class="lbl">PNG</span></button>
+        <button class="btn sm primary" id="btnXls" title="Baixar planilha com dados, coeficientes e gráfico"><svg class="i"><use href="#i-xls"/></svg><span class="lbl">Excel</span></button>
+      </div>
+      <div class="toolbar" role="group" aria-label="Opções do gráfico">
+        <button class="chip" data-show="d10" aria-pressed="false"><span class="ck"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><span>D<sub>10</sub></span></button>
+        <button class="chip" data-show="d15" aria-pressed="false"><span class="ck"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><span>D<sub>15</sub></span></button>
+        <button class="chip" data-show="d30" aria-pressed="false"><span class="ck"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><span>D<sub>30</sub></span></button>
+        <button class="chip" data-show="d60" aria-pressed="false"><span class="ck"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><span>D<sub>60</sub></span></button>
+        <button class="chip" data-show="d85" aria-pressed="false"><span class="ck"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><span>D<sub>85</sub></span></button>
+        <span class="sep"></span>
+        <button class="chip" data-show="limits" aria-pressed="false" title="Linhas verticais nos limites entre pedregulho, areia, silte e argila"><span class="ck"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span>Limites das frações</button>
+        <button class="chip" data-show="sieves" aria-pressed="false" title="Linhas verticais nas peneiras"><span class="ck"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span>Peneiras</button>
+        <label class="sysel">Frações:
+          <select id="sys" aria-label="Sistema de classificação das frações">
+            <option value="abnt">ABNT NBR 6502</option>
+            <option value="sucs">SUCS (ASTM D2487)</option>
+          </select>
+        </label>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div class="fs-hint">Gire o celular para o modo paisagem para ver o gráfico maior.</div>
+      <div class="chart-wrap" id="chartWrap"><div id="chart"></div><div class="gtip" id="gtip" hidden></div></div>
+      <details id="fracDetails">
+        <summary>Frações do solo e peneiras limite</summary>
+        <div id="fracTable" style="margin-top:8px"></div>
+      </details>
+    </section>
+
+    <section class="results" id="results" aria-live="polite"></section>
+  </div>
+ </div>
+</main>
+
+<!-- ============================ TEORIA ============================ -->
+<main class="wrap" id="view-theory" role="tabpanel" aria-labelledby="tab-theory" hidden>
+<div class="theory">
+<nav class="tnav" id="tnav" aria-label="Índice da teoria">
+  <a href="#t-visao">Visão geral</a>
+  <a href="#t-peneiramento">1 · Peneiramento</a>
+  <a href="#t-curva">2 · Curva granulométrica</a>
+  <a href="#t-sedimentacao">3 · Sedimentação</a>
+  <a href="#t-coef">4 · Cu e Cc</a>
+  <a href="#t-tipos">5 · Tipos de curva</a>
+  <a href="#t-fracoes">6 · Frações e peneiras</a>
+  <a href="#t-sucs">7 · Classificação SUCS</a>
+  <a href="#t-aplic">8 · Aplicações práticas</a>
+  <a href="#t-uso">Como usar o app</a>
+  <a href="#t-refs">Referências</a>
+</nav>
+
+<div class="tbody">
+
+<section class="card sec" id="t-visao">
+  <h2>Visão geral</h2>
+  <p>A <b>análise granulométrica</b> determina como as partículas de um solo se distribuem por tamanho. O resultado é a <b>curva granulométrica</b>, uma espécie de “assinatura” do solo: dela saem os diâmetros característicos (D<sub>10</sub>, D<sub>30</sub>, D<sub>60</sub>), os coeficientes de uniformidade e de curvatura e as primeiras pistas sobre compactação, permeabilidade e comportamento mecânico.</p>
+  <div class="flow">
+    <div><b>1 · Peneiramento</b>Fração grossa: pedregulhos e areias (&gt; 0,075 mm).</div>
+    <div><b>2 · Sedimentação</b>Fração fina: silte e argila (&lt; 0,075 mm), pela Lei de Stokes.</div>
+    <div><b>3 · Curva</b>% passante × diâmetro, em escala semilogarítmica.</div>
+    <div><b>4 · Coeficientes</b>D<sub>10</sub>, D<sub>30</sub>, D<sub>60</sub> → C<sub>u</sub> e C<sub>c</sub>.</div>
+    <div><b>5 · Uso</b>Graduação, classificação (SUCS), projeto e controle.</div>
+  </div>
+</section>
+
+<section class="card sec" id="t-peneiramento">
+  <h2>1 · Peneiramento — fração grossa</h2>
+  <p><b>Princípio do método.</b> A amostra seca passa por um conjunto de peneiras padronizadas (série ASTM ou ABNT) empilhadas verticalmente: do topo (malha mais aberta) até a base (malha mais fechada), com um prato coletor no fundo. Agita-se o conjunto e pesa-se o material retido em cada peneira.</p>
+  <h3>Sequência típica de peneiras</h3>
+  <div id="sieveTable"></div>
+  <div class="callout"><b>Limite inferior do peneiramento.</b> A peneira nº 200 (0,075 mm) é o limite físico do ensaio: separa a fração grossa (pedregulhos e areias &gt; 0,075 mm) da fração fina (&lt; 0,075 mm), que só pode ser caracterizada por sedimentação.</div>
+  <h3>Cálculos</h3>
+  <p>Com M<sub>i</sub> a massa retida na peneira <i>i</i> e M<sub>t</sub> a massa total ensaiada (soma das retidas mais o fundo):</p>
+  <div class="eq">
+    <math display="block"><mrow><msub><mi>%R</mi><mi>i</mi></msub><mo>=</mo><mfrac><msub><mi>M</mi><mi>i</mi></msub><msub><mi>M</mi><mi>t</mi></msub></mfrac><mo>×</mo><mn>100</mn></mrow></math>
+    <math display="block"><mrow><msub><mi>%R</mi><mrow><mi>ac</mi><mo>,</mo><mi>i</mi></mrow></msub><mo>=</mo><munderover><mo>∑</mo><mrow><mi>j</mi><mo>=</mo><mn>1</mn></mrow><mi>i</mi></munderover><msub><mi>%R</mi><mi>j</mi></msub></mrow></math>
+    <math display="block"><mrow><msub><mi>%P</mi><mi>i</mi></msub><mo>=</mo><mn>100</mn><mo>−</mo><msub><mi>%R</mi><mrow><mi>ac</mi><mo>,</mo><mi>i</mi></mrow></msub></mrow></math>
+    <span class="cap">% retida, % retida acumulada e % passante (que passa) na peneira i</span>
+  </div>
+  <p>No app, use o modo <b>Massa retida (g)</b>: digite a massa de cada peneira e a do fundo, e o % passante é calculado automaticamente. A soma das massas retidas deve fechar com a massa inicial (a diferença é, em geral, muito pequena).</p>
+</section>
+
+<section class="card sec" id="t-curva">
+  <h2>2 · A curva granulométrica</h2>
+  <p>É a representação gráfica da distribuição das partículas por tamanho, traçada em <b>papel semilogarítmico</b>: o eixo horizontal mostra o diâmetro em <b>escala logarítmica</b> e o eixo vertical a porcentagem em escala aritmética.</p>
+  <h3>Por que escala logarítmica?</h3>
+  <ul>
+    <li>Representa uma faixa enorme de tamanhos (0,001 mm a 100 mm) em um único gráfico.</li>
+    <li>Dá igual importância visual a todas as frações granulométricas.</li>
+    <li>Facilita identificar descontinuidades e avaliar a uniformidade.</li>
+  </ul>
+  <div class="two">
+    <div class="app-card"><h4>% de massa que passa (% passante)</h4><p>Percentual acumulado de material que passa através de cada peneira. Começa em 100% (todo material passa pela maior peneira) e decresce com o diâmetro. É o padrão mais comum na geotecnia brasileira — eixo esquerdo do gráfico.</p></div>
+    <div class="app-card"><h4>% de massa retida acumulada</h4><p>Percentual acumulado retido em cada peneira. Começa em 0% e cresce com a diminuição do diâmetro. Comum em normas americanas (ASTM) e no controle de agregados — eixo direito do gráfico. Os dois eixos somam sempre 100%.</p></div>
+  </div>
+  <h3>Lendo um diâmetro característico</h3>
+  <p>D<sub>P</sub> é o diâmetro correspondente a P% passante. Entre dois pontos medidos (D<sub>1</sub>, P<sub>1</sub>) e (D<sub>2</sub>, P<sub>2</sub>), o app interpola linearmente o % passante contra log D — exatamente o que se faz “no olho” sobre o papel semilog:</p>
+  <div class="eq">
+    <math display="block"><mrow><mi>log</mi><msub><mi>D</mi><mi>P</mi></msub><mo>=</mo><mi>log</mi><msub><mi>D</mi><mn>1</mn></msub><mo>+</mo><mfrac><mrow><mi>P</mi><mo>−</mo><msub><mi>P</mi><mn>1</mn></msub></mrow><mrow><msub><mi>P</mi><mn>2</mn></msub><mo>−</mo><msub><mi>P</mi><mn>1</mn></msub></mrow></mfrac><mo>·</mo><mo stretchy="false">(</mo><mi>log</mi><msub><mi>D</mi><mn>2</mn></msub><mo>−</mo><mi>log</mi><msub><mi>D</mi><mn>1</mn></msub><mo stretchy="false">)</mo></mrow></math>
+    <span class="cap">interpolação log-linear</span>
+  </div>
+  <div class="callout warn">Se a curva não chega a 10% passante (por exemplo, o ensaio parou na peneira nº 200 com 25% de finos), D<sub>10</sub> <b>não pode ser lido</b> — é preciso complementar com a sedimentação. O app avisa nesses casos em vez de extrapolar.</div>
+</section>
+
+<section class="card sec" id="t-sedimentacao">
+  <h2>3 · Sedimentação — fração fina</h2>
+  <p>O ensaio de sedimentação caracteriza quantitativamente as partículas de <b>silte e argila</b> (fração fina &lt; 0,075 mm). Usa a <b>Lei de Stokes</b> para determinar o diâmetro equivalente das partículas em suspensão a partir da medição da sua velocidade de sedimentação.</p>
+  <h3>Lei de Stokes — equação fundamental</h3>
+  <p>Para partículas esféricas em regime laminar (Re &lt; 1):</p>
+  <div class="eq">
+    <math display="block"><mrow><mi>v</mi><mo>=</mo><mfrac><mrow><mo stretchy="false">(</mo><msub><mi>γ</mi><mi>s</mi></msub><mo>−</mo><msub><mi>γ</mi><mi>w</mi></msub><mo stretchy="false">)</mo><mo>·</mo><msup><mi>D</mi><mn>2</mn></msup></mrow><mrow><mn>18</mn><mo>·</mo><mi>μ</mi></mrow></mfrac></mrow></math>
+    <math display="block"><mrow><mi>D</mi><mo>=</mo><msqrt><mfrac><mrow><mn>18</mn><mo>·</mo><mi>μ</mi><mo>·</mo><mi>v</mi></mrow><mrow><msub><mi>γ</mi><mi>s</mi></msub><mo>−</mo><msub><mi>γ</mi><mi>w</mi></msub></mrow></mfrac></msqrt><mo>,</mo><mspace width="1em"/><mi>v</mi><mo>=</mo><mfrac><mi>H</mi><mi>t</mi></mfrac></mrow></math>
+  </div>
+  <ul>
+    <li><i>v</i> = velocidade de sedimentação; <i>H</i> = altura de queda (profundidade efetiva de leitura do densímetro) e <i>t</i> = tempo decorrido;</li>
+    <li>γ<sub>s</sub> e γ<sub>w</sub> = pesos específicos dos sólidos e da água; μ = viscosidade dinâmica da água (depende da temperatura);</li>
+    <li><i>D</i> = diâmetro da esfera equivalente que cai com a mesma velocidade.</li>
+  </ul>
+  <p>Quanto <b>menor</b> a partícula, <b>mais devagar</b> ela decanta (v ∝ D²): por isso as leituras vão de segundos a 24 horas.</p>
+  <h3>O densímetro</h3>
+  <p>É o instrumento que mede a densidade da suspensão solo–água ao longo do tempo. A densidade a uma profundidade H, no instante t, diz quanto sólido ainda está em suspensão — ou seja, a porcentagem de partículas <i>menores</i> que o diâmetro D de Stokes correspondente. A amostra é previamente dispersa com defloculante (hexametafosfato de sódio) para que os grãos decantem isolados. As leituras típicas são feitas em 0,5; 1; 2; 4; 8; 15 e 30 min e em 1; 2; 4; 8 e 24 h.</p>
+  <div class="callout warn">Hipóteses da Lei de Stokes: partículas esféricas, regime laminar, suspensão diluída. Abaixo de cerca de 0,001 mm o movimento browniano e a floculação passam a dominar; por isso a escala do gráfico é limitada em ≈ 0,001 mm.</div>
+
+  <h3>Simulador de Stokes</h3>
+  <p>Veja quanto tempo um grão de cada diâmetro leva para cair a altura H na água à temperatura informada:</p>
+  <div class="calc-box">
+    <label class="field"><span>Densidade dos grãos G<sub>s</sub></span><input class="in" id="stG" inputmode="decimal" value="2,65"></label>
+    <label class="field"><span>Temperatura da água (°C)</span><input class="in" id="stT" inputmode="decimal" value="20"></label>
+    <label class="field"><span>Altura de queda H (cm)</span><input class="in" id="stH" inputmode="decimal" value="10"></label>
+  </div>
+  <div class="tscroll"><table class="tbl" id="stTable"></table></div>
+  <p class="hint" id="stNote"></p>
+</section>
+
+<section class="card sec" id="t-coef">
+  <h2>4 · Coeficientes granulométricos</h2>
+  <p>São parâmetros adimensionais calculados a partir dos diâmetros característicos (D<sub>10</sub>, D<sub>30</sub>, D<sub>60</sub>) que quantificam a forma e a distribuição da curva — essenciais para a classificação de solos. D<sub>10</sub> é também chamado de <b>diâmetro efetivo</b>.</p>
+  <div class="two">
+    <div>
+      <h3>Coeficiente de uniformidade (C<sub>u</sub>)</h3>
+      <div class="eq"><math display="block"><mrow><msub><mi>C</mi><mi>u</mi></msub><mo>=</mo><mfrac><msub><mi>D</mi><mn>60</mn></msub><msub><mi>D</mi><mn>10</mn></msub></mfrac></mrow></math></div>
+      <p>Mede a <b>amplitude</b> da distribuição, indicando a variação de tamanhos de partículas.</p>
+      <ul>
+        <li><b>C<sub>u</sub> &lt; 5:</b> solo mal graduado (muito uniforme)</li>
+        <li><b>C<sub>u</sub> = 5 a 15:</b> uniformidade média</li>
+        <li><b>C<sub>u</sub> &gt; 15:</b> solo bem graduado (heterogêneo)</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Coeficiente de curvatura (C<sub>c</sub>)</h3>
+      <div class="eq"><math display="block"><mrow><msub><mi>C</mi><mi>c</mi></msub><mo>=</mo><mfrac><msubsup><mi>D</mi><mn>30</mn><mn>2</mn></msubsup><mrow><msub><mi>D</mi><mn>10</mn></msub><mo>×</mo><msub><mi>D</mi><mn>60</mn></msub></mrow></mfrac></mrow></math></div>
+      <p>Avalia a <b>forma</b> da curva, indicando se a distribuição é contínua e harmônica.</p>
+      <ul>
+        <li><b>1 ≤ C<sub>c</sub> ≤ 3:</b> solo bem graduado</li>
+        <li><b>Fora dessa faixa:</b> solo mal graduado</li>
+      </ul>
+    </div>
+  </div>
+  <h3>Exemplo resolvido (da aula)</h3>
+  <p>Curva vermelha lida no gráfico: D<sub>10</sub> = 0,2 mm, D<sub>30</sub> ≈ 0,6 mm e D<sub>60</sub> ≈ 1,8 mm.</p>
+  <div class="eq">
+    <math display="block"><mrow><msub><mi>C</mi><mi>u</mi></msub><mo>=</mo><mfrac><mrow><mn>1,8</mn></mrow><mrow><mn>0,2</mn></mrow></mfrac><mo>=</mo><mn>9</mn><mspace width="1.5em"/><msub><mi>C</mi><mi>c</mi></msub><mo>=</mo><mfrac><msup><mn>0,6</mn><mn>2</mn></msup><mrow><mn>0,2</mn><mo>×</mo><mn>1,8</mn></mrow></mfrac><mo>=</mo><mfrac><mn>0,36</mn><mn>0,36</mn></mfrac><mo>=</mo><mn>1,0</mn></mrow></math>
+    <span class="cap">C<sub>u</sub> = 9 → uniformidade média · C<sub>c</sub> = 1,0 → dentro de 1–3 (curva harmônica)</span>
+  </div>
+  <button class="btn" id="btnLesson"><svg class="i"><use href="#i-flask"/></svg>Abrir este exemplo no app</button>
+  <div class="callout" style="margin-top:12px"><b>Por que os dois coeficientes?</b> C<sub>u</sub> sozinho não basta: um solo com patamar horizontal (graduação aberta) pode ter C<sub>u</sub> enorme e, ainda assim, faltar uma faixa inteira de tamanhos — o C<sub>c</sub> fora de 1–3 denuncia isso. Pelo critério SUCS, <b>bem graduado</b> exige 1 ≤ C<sub>c</sub> ≤ 3 e C<sub>u</sub> ≥ 4 (pedregulhos) ou C<sub>u</sub> ≥ 6 (areias); é o critério usado como “graduação” final no app.</div>
+</section>
+
+<section class="card sec" id="t-tipos">
+  <h2>5 · Lendo o formato da curva</h2>
+  <div class="cards3">
+    <div class="mini" style="--c:#2563eb"><h4 style="color:#2563eb">Curva azul — solo uniforme</h4>
+      <svg class="mc" data-mini="ex-uniforme" viewBox="0 0 260 130"></svg>
+      <div class="grains" aria-hidden="true"><i style="width:22px;height:22px"></i><i style="width:22px;height:21px"></i><i style="width:21px;height:22px"></i><i style="width:22px;height:20px"></i><i style="width:20px;height:22px"></i><i style="width:22px;height:22px"></i></div>
+      <ul><li><b>Curva:</b> quase vertical, íngreme.</li><li><b>Distribuição:</b> grãos de tamanhos muito similares.</li><li><b>Comportamento:</b> baixa compactação, alta permeabilidade (bom para filtros).</li></ul></div>
+    <div class="mini" style="--c:#16a34a"><h4 style="color:#16a34a">Curva verde — solo bem graduado</h4>
+      <svg class="mc" data-mini="ex-bem" viewBox="0 0 260 130"></svg>
+      <div class="grains" aria-hidden="true"><i style="width:28px;height:26px"></i><i style="width:22px;height:21px"></i><i style="width:17px;height:16px"></i><i style="width:13px;height:12px"></i><i style="width:9px;height:9px"></i><i style="width:6px;height:6px"></i><i style="width:4px;height:4px"></i></div>
+      <ul><li><b>Curva:</b> diagonal suave e contínua.</li><li><b>Distribuição:</b> ampla e contínua de grãos.</li><li><b>Comportamento:</b> alta compactação, resistência e estabilidade.</li></ul></div>
+    <div class="mini" style="--c:#dc2626"><h4 style="color:#dc2626">Curva vermelha — graduação aberta</h4>
+      <svg class="mc" data-mini="ex-aberta" viewBox="0 0 260 130"></svg>
+      <div class="grains" aria-hidden="true"><i style="width:28px;height:26px"></i><i style="width:22px;height:21px"></i><i style="width:4px;height:4px;margin-left:30px"></i><i style="width:4px;height:4px"></i></div>
+      <ul><li><b>Curva:</b> patamar horizontal.</li><li><b>Distribuição:</b> ausência de frações intermediárias.</li><li><b>Comportamento:</b> estrutura instável, difícil compactação.</li></ul></div>
+  </div>
+  <p style="margin-top:12px">O app detecta a graduação aberta procurando um trecho interior da curva (entre 10% e 95% passante) que se estende por pelo menos uma década de diâmetros com inclinação de, no máximo, 5 pontos percentuais por década.</p>
+</section>
+
+<section class="card sec" id="t-fracoes">
+  <h2>6 · Frações do solo e peneiras limite</h2>
+  <p>As fronteiras entre pedregulho, areia, silte e argila dependem da norma adotada. Alterne o sistema no gráfico (ABNT NBR 6502 ou SUCS/ASTM) — as faixas, as linhas dos limites e a composição acompanham.</p>
+  <div id="fracTables"></div>
+  <div class="callout">Abaixo de 0,075 mm não há peneira prática: a distribuição de <b>silte e argila</b> vem do <b>ensaio de sedimentação</b>. O limite argila/silte (0,002 mm) só é medido por sedimentação.</div>
+</section>
+
+<section class="card sec" id="t-sucs">
+  <h2>7 · Classificação SUCS preliminar</h2>
+  <p>Só com a granulometria é possível uma classificação <b>preliminar</b> pelo Sistema Unificado (SUCS, ASTM D2487). O app usa as porcentagens de pedregulho (&gt; 4,75 mm), areia (4,75 a 0,075 mm) e finos (&lt; 0,075 mm):</p>
+  <div class="tscroll"><table class="tbl" style="min-width:520px">
+    <tr><th>Finos (&lt; 0,075 mm)</th><th>Resultado</th></tr>
+    <tr><td>&lt; 5%</td><td>GW/GP (pedregulho) ou SW/SP (areia): <b>W</b> se C<sub>u</sub> ≥ 4 (G) ou ≥ 6 (S) e 1 ≤ C<sub>c</sub> ≤ 3; senão <b>P</b></td></tr>
+    <tr><td>5% a 12%</td><td>Símbolo duplo (ex.: GW-GM, SP-SC) — M ou C depende da plasticidade</td></tr>
+    <tr><td>&gt; 12% e &lt; 50%</td><td>GM/GC ou SM/SC — M (silte) ou C (argila) depende de LL e IP</td></tr>
+    <tr><td>≥ 50%</td><td>Solo fino (ML, CL, MH, CH…) — exige limites de Atterberg e Carta de Plasticidade</td></tr>
+  </table></div>
+  <p>G = pedregulho, S = areia, W = bem graduado, P = mal graduado, M = silte, C = argila. A letra G ou S é a fração predominante na parte grossa.</p>
+</section>
+
+<section class="card sec" id="t-aplic">
+  <h2>8 · Aplicações práticas</h2>
+  <div class="cards3">
+    <div class="app-card"><h4>Aterros e terraplenagem</h4><p>Solos bem graduados atingem maior massa específica seca na compactação e maior resistência; a curva ajuda a escolher jazidas de empréstimo e a prever a facilidade de compactação.</p></div>
+    <div class="app-card"><h4>Pavimentação</h4><p>Bases, sub-bases e reforços são especificados por <b>faixas granulométricas</b>: a curva do material precisa “caber” dentro da faixa de projeto. Misturas de dois ou mais solos corrigem a graduação.</p></div>
+    <div class="app-card"><h4>Filtros e drenos</h4><p>Critério de Terzaghi: D<sub>15</sub>(filtro)/D<sub>85</sub>(solo) &lt; 5 (retém o solo) e D<sub>15</sub>(filtro)/D<sub>15</sub>(solo) &gt; 5 (drena). Solos uniformes e limpos são bons filtros.</p></div>
+    <div class="app-card"><h4>Permeabilidade (Hazen)</h4><p>Para areias limpas, k ≈ C·D<sub>10</sub>² (D<sub>10</sub> em cm, k em cm/s, C ≈ 100), válida para 0,1 mm &lt; D<sub>10</sub> &lt; 3 mm e C<sub>u</sub> &lt; 5. O app exibe essa estimativa quando aplicável.</p></div>
+    <div class="app-card"><h4>Barragens e erosão interna</h4><p>Solos de graduação aberta (curva com patamar) podem perder a fração fina carregada pela água entre os grãos grossos — risco de erosão interna. A curva é o primeiro teste de suscetibilidade.</p></div>
+    <div class="app-card"><h4>Liquefação de areias</h4><p>Areias finas, uniformes (C<sub>u</sub> baixo), fofas e saturadas são as mais suscetíveis à liquefação sob carregamento cíclico (sismos, vibrações).</p></div>
+    <div class="app-card"><h4>Agregados e concreto</h4><p>A granulometria de areias e britas, com o % retido acumulado, define o módulo de finura e o enquadramento nas zonas granulométricas — daí o eixo direito do gráfico.</p></div>
+    <div class="app-card"><h4>Classificação e projeto</h4><p>SUCS e TRB/AASHTO partem da granulometria; correlações empíricas ligam D<sub>10</sub>, C<sub>u</sub> e % de finos a permeabilidade, ângulo de atrito, suscetibilidade ao gelo e capilaridade.</p></div>
+    <div class="app-card"><h4>Estabilização granulométrica</h4><p>Compare no app as curvas de dois solos e de uma mistura prevista: a combinação de um solo grosso com um fino pode “fechar” o patamar e gerar um material bem graduado.</p></div>
+  </div>
+</section>
+
+<section class="card sec" id="t-uso">
+  <h2>Como usar o app</h2>
+  <ol class="steps">
+    <li><b>Escolha ou crie um ensaio.</b> Há três exemplos prontos (bem graduado, uniforme e graduação aberta). Use <b>Novo</b> para começar do zero com as peneiras padrão.</li>
+    <li><b>Digite os dados.</b> Informe o diâmetro (mm) e o % passante, % retida acumulada ou a massa retida (g) de cada peneira. Use vírgula ou ponto. Para a fração fina, adicione os pontos da sedimentação (0,05; 0,02; 0,005; 0,002 mm…). A curva é traçada a cada digitação.</li>
+    <li><b>Ou importe.</b> Cole direto do Excel, abra um .xlsx/.csv, ou arraste o arquivo para a tela. Várias colunas viram vários ensaios.</li>
+    <li><b>Compare.</b> Cada ensaio tem sua cor; o olho na lista mostra ou oculta a curva. Passe o mouse (ou toque) sobre o gráfico para ver o % passante e o % retido de todas as curvas.</li>
+    <li><b>Ative as guias.</b> Marque D<sub>10</sub>, D<sub>30</sub> e D<sub>60</sub> para ver as linhas horizontal e vertical até a curva; marque <i>Limites das frações</i> para ver as separações e as peneiras correspondentes.</li>
+    <li><b>Exporte.</b> PNG do gráfico, ou planilha Excel com os dados, os coeficientes (com fórmulas) e a imagem do gráfico.</li>
+  </ol>
+  <p class="hint">Os dados ficam salvos apenas neste navegador (localStorage); nada é enviado para servidores.</p>
+</section>
+
+<section class="card sec" id="t-refs">
+  <h2>Referências</h2>
+  <ul class="refs">
+    <li>ABNT NBR 7181 — Solo: análise granulométrica.</li>
+    <li>ABNT NBR 6502 — Rochas e solos: terminologia.</li>
+    <li>ASTM D6913 — Particle-size distribution (gradation) of soils using sieve analysis.</li>
+    <li>ASTM D7928 — Particle-size distribution of fine-grained soils using the sedimentation (hydrometer) analysis.</li>
+    <li>ASTM D2487 — Classification of soils for engineering purposes (Unified Soil Classification System).</li>
+    <li>PINTO, C. S. <i>Curso básico de mecânica dos solos</i>. Oficina de Textos.</li>
+    <li>DAS, B. M. <i>Fundamentos de engenharia geotécnica</i>. Cengage.</li>
+    <li>Material de aula — Pós-graduação PUC Minas (peneiramento, curva granulométrica, sedimentação e coeficientes).</li>
+  </ul>
+  <p class="hint">As classificações do app são uma ferramenta de apoio ao estudo e à triagem; decisões de projeto devem seguir as normas vigentes e o julgamento do engenheiro responsável.</p>
+</section>
+
+</div>
+</div>
+
+</main>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<dialog id="dlgPaste">
+  <form method="dialog" id="pasteForm">
+    <h3>Colar dados do Excel ou CSV</h3>
+    <p class="hint">Copie as células no Excel (diâmetro na 1ª coluna e % passante, % retida ou massa retida nas seguintes) e cole abaixo. Várias colunas viram vários ensaios. O cabeçalho é opcional.</p>
+    <textarea id="pasteText" placeholder="Diâmetro (mm)&#9;% Passante&#10;4,75&#9;100&#10;2&#9;85&#10;0,6&#9;52&#10;0,075&#9;12" spellcheck="false"></textarea>
+    <div class="dlg-msg" id="pasteMsg"></div>
+    <div class="dlg-foot">
+      <button class="btn" type="button" id="pasteCancel">Cancelar</button>
+      <button class="btn" type="button" id="pasteReplace">Substituir ensaio selecionado</button>
+      <button class="btn primary" type="button" id="pasteNew">Criar novo ensaio</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+/* ── core.js ── */
+/* ==========================================================================
+   core.js — cálculo granulométrico (sem DOM, testável em Node)
+   ========================================================================== */
+const GranuloCore = (() => {
+  'use strict';
+
+  /* ---------- Série de peneiras (conforme material da aula) ---------- */
+  const SIEVES = [
+    { d: 76,    label: '3″',     name: '76,0 mm (3″)',    prio: 2 },
+    { d: 50,    label: '2″',     name: '50,0 mm (2″)',    prio: 1 },
+    { d: 38,    label: '1½″',    name: '38,0 mm (1½″)',   prio: 1 },
+    { d: 25,    label: '1″',     name: '25,0 mm (1″)',    prio: 1 },
+    { d: 19,    label: '¾″',     name: '19,0 mm (¾″)',    prio: 2 },
+    { d: 9.5,   label: '⅜″',     name: '9,5 mm (⅜″)',     prio: 1 },
+    { d: 4.75,  label: 'nº 4',   name: '4,75 mm (nº 4)',  prio: 3 },
+    { d: 2.0,   label: 'nº 10',  name: '2,0 mm (nº 10)',  prio: 3 },
+    { d: 1.2,   label: 'nº 16',  name: '1,2 mm (nº 16)',  prio: 1 },
+    { d: 0.6,   label: 'nº 30',  name: '0,6 mm (nº 30)',  prio: 2 },
+    { d: 0.42,  label: 'nº 40',  name: '0,42 mm (nº 40)', prio: 3 },
+    { d: 0.25,  label: 'nº 60',  name: '0,25 mm (nº 60)', prio: 1 },
+    { d: 0.15,  label: 'nº 100', name: '0,15 mm (nº 100)',prio: 2 },
+    { d: 0.075, label: 'nº 200', name: '0,075 mm (nº 200)',prio: 4 },
+  ];
+
+  /* ---------- Sistemas de classificação das frações ---------- */
+  const GROUP_COLORS = {
+    pedregulho: '#9aa7b8',
+    areia: '#f1c24f',
+    silte: '#8cc3a0',
+    argila: '#c98a63',
+  };
+
+  const SYSTEMS = {
+    abnt: {
+      id: 'abnt',
+      name: 'ABNT NBR 6502',
+      groups: [
+        { key: 'argila', label: 'Argila', subs: [{ key: 'argila', label: 'Argila', lo: 0, hi: 0.002 }] },
+        { key: 'silte', label: 'Silte', subs: [{ key: 'silte', label: 'Silte', lo: 0.002, hi: 0.06 }] },
+        { key: 'areia', label: 'Areia', subs: [
+          { key: 'areia-fina',  label: 'Fina',   lo: 0.06, hi: 0.2 },
+          { key: 'areia-media', label: 'Média',  lo: 0.2,  hi: 0.6 },
+          { key: 'areia-grossa',label: 'Grossa', lo: 0.6,  hi: 2 } ] },
+        { key: 'pedregulho', label: 'Pedregulho', subs: [
+          { key: 'ped-fino',  label: 'Fino',   lo: 2,  hi: 6 },
+          { key: 'ped-medio', label: 'Médio',  lo: 6,  hi: 20 },
+          { key: 'ped-grosso',label: 'Grosso', lo: 20, hi: Infinity } ] },
+      ],
+      // limites entre frações e a peneira correspondente
+      boundaries: [
+        { d: 0.002, sed: true, short: 'Sedimentação', sieve: 'Sem peneira — ensaio de sedimentação (densímetro)', between: 'argila | silte' },
+        { d: 0.06,  short: '≈ nº 200', sieve: 'nº 230 (0,063 mm); na prática usa-se a nº 200 (0,075 mm)', between: 'silte | areia fina' },
+        { d: 0.2,   short: '≈ nº 70',  sieve: 'nº 70 (0,21 mm) — a mais próxima', between: 'areia fina | média' },
+        { d: 0.6,   short: 'nº 30',    sieve: 'nº 30 (0,6 mm)', between: 'areia média | grossa' },
+        { d: 2,     short: 'nº 10',    sieve: 'nº 10 (2,0 mm)', between: 'areia grossa | pedregulho fino' },
+        { d: 6,     short: '≈ ¼″',     sieve: '¼″ (6,3 mm) — a mais próxima', between: 'pedregulho fino | médio' },
+        { d: 20,    short: '≈ ¾″',     sieve: '¾″ (19 mm) — a mais próxima', between: 'pedregulho médio | grosso' },
+      ],
+      fineLimit: 0.06,
+    },
+    sucs: {
+      id: 'sucs',
+      name: 'SUCS / ASTM D2487',
+      groups: [
+        { key: 'argila', label: 'Argila', subs: [{ key: 'argila', label: 'Argila', lo: 0, hi: 0.002 }] },
+        { key: 'silte', label: 'Silte', subs: [{ key: 'silte', label: 'Silte', lo: 0.002, hi: 0.075 }] },
+        { key: 'areia', label: 'Areia', subs: [
+          { key: 'areia-fina',  label: 'Fina',   lo: 0.075, hi: 0.425 },
+          { key: 'areia-media', label: 'Média',  lo: 0.425, hi: 2 },
+          { key: 'areia-grossa',label: 'Grossa', lo: 2,     hi: 4.75 } ] },
+        { key: 'pedregulho', label: 'Pedregulho', subs: [
+          { key: 'ped-fino',  label: 'Fino',   lo: 4.75, hi: 19 },
+          { key: 'ped-grosso',label: 'Grosso', lo: 19,   hi: Infinity } ] },
+      ],
+      boundaries: [
+        { d: 0.002, sed: true, short: 'Sedimentação', sieve: 'Sem peneira — ensaio de sedimentação (densímetro)', between: 'argila | silte (convencional)' },
+        { d: 0.075, short: 'nº 200', sieve: 'nº 200 (0,075 mm) — limite físico do peneiramento', between: 'finos | areia fina' },
+        { d: 0.425, short: 'nº 40',  sieve: 'nº 40 (0,425 mm)', between: 'areia fina | média' },
+        { d: 2,     short: 'nº 10',  sieve: 'nº 10 (2,0 mm)', between: 'areia média | grossa' },
+        { d: 4.75,  short: 'nº 4',   sieve: 'nº 4 (4,75 mm)', between: 'areia | pedregulho fino' },
+        { d: 19,    short: '¾″',     sieve: '¾″ (19 mm)', between: 'pedregulho fino | grosso' },
+      ],
+      fineLimit: 0.075,
+    },
+  };
+
+  /* ---------- Utilidades numéricas ---------- */
+  const log10 = Math.log10;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+  function toNum(x) {
+    if (typeof x === 'number') return isFinite(x) ? x : NaN;
+    if (x == null) return NaN;
+    let s = String(x).trim().replace('%', '').replace(/\s/g, '');
+    if (!s) return NaN;
+    if (s.includes(',') && s.includes('.')) s = s.replace(/\./g, '').replace(',', '.');
+    else s = s.replace(',', '.');
+    const n = Number(s);
+    return isFinite(n) ? n : NaN;
+  }
+
+  const nf = (opts) => new Intl.NumberFormat('pt-BR', opts);
+  const NF_AUTO = nf({ maximumFractionDigits: 8 });
+  function fmtNum(n, sig = 3) {
+    if (n == null || !isFinite(n)) return '—';
+    if (n === 0) return '0';
+    return NF_AUTO.format(Number(n.toPrecision(sig)));
+  }
+  function fmtPct(p, dec = 1) {
+    if (p == null || !isFinite(p)) return '—';
+    return nf({ minimumFractionDigits: dec, maximumFractionDigits: dec }).format(p) + '%';
+  }
+  function fmtSci(n) { // 3,2×10⁻²
+    if (n == null || !isFinite(n) || n === 0) return '—';
+    const e = Math.floor(log10(Math.abs(n)));
+    const m = n / Math.pow(10, e);
+    const sup = String(e).replace(/-/g, '⁻').replace(/\d/g, c => '⁰¹²³⁴⁵⁶⁷⁸⁹'[c]);
+    return fmtNum(m, 2) + '×10' + sup;
+  }
+
+  function sieveFor(d, tol = 0.025) {
+    for (const s of SIEVES) if (Math.abs(s.d - d) / s.d <= tol) return s;
+    return null;
+  }
+
+  /* ---------- Curva a partir do ensaio ---------- */
+  // ensaio: { mode: 'passa' | 'retida' | 'massa', rows:[{d,v}], fundo }
+  function buildCurve(e) {
+    const warnings = [];
+    const rows = e.rows || [];
+    let pts = [];
+    let total = null;
+
+    if (e.mode === 'massa') {
+      const items = [];
+      rows.forEach((r, i) => {
+        const d = toNum(r.d), m = toNum(r.v);
+        if (d > 0 && isFinite(m)) {
+          if (m < 0) warnings.push(`Linha ${i + 1}: massa negativa ignorada.`);
+          else items.push({ i, d, m });
+        }
+      });
+      items.sort((a, b) => b.d - a.d);
+      const fundoN = toNum(e.fundo);
+      const fundo = isFinite(fundoN) && fundoN > 0 ? fundoN : 0;
+      total = items.reduce((s, r) => s + r.m, 0) + fundo;
+      if (total > 0) {
+        let cum = 0;
+        for (const it of items) {
+          cum += it.m;
+          pts.push({ d: it.d, p: clamp(100 * (total - cum) / total, 0, 100), row: it.i, m: it.m });
+        }
+      }
+      if (items.length && fundo === 0)
+        warnings.push('Informe a massa retida no fundo (prato) para fechar o balanço de massas.');
+    } else {
+      rows.forEach((r, i) => {
+        const d = toNum(r.d), v = toNum(r.v);
+        if (!(d > 0) || !isFinite(v)) return;
+        let p = e.mode === 'retida' ? 100 - v : v;
+        if (p < -1e-9 || p > 100 + 1e-9) {
+          warnings.push(`Linha ${i + 1}: valor fora de 0–100% — ajustado.`);
+          p = clamp(p, 0, 100);
+        }
+        pts.push({ d, p, row: i });
+      });
+    }
+
+    // ordena por diâmetro crescente e remove diâmetros repetidos (mantém o último digitado)
+    pts.sort((a, b) => a.d - b.d || a.row - b.row);
+    const dedup = [];
+    for (const q of pts) {
+      if (dedup.length && Math.abs(dedup[dedup.length - 1].d - q.d) < 1e-12) {
+        warnings.push(`Diâmetro ${fmtNum(q.d)} mm repetido — usado o último valor.`);
+        dedup[dedup.length - 1] = q;
+      } else dedup.push(q);
+    }
+    pts = dedup;
+
+    // monotonicidade: % passante deve crescer com o diâmetro
+    const bad = [];
+    for (let i = 1; i < pts.length; i++) if (pts[i].p < pts[i - 1].p - 1e-9) bad.push(pts[i].d);
+    if (bad.length)
+      warnings.push(`% passante decresce com o aumento do diâmetro em ${bad.map(d => fmtNum(d) + ' mm').slice(0, 3).join(', ')}${bad.length > 3 ? '…' : ''} — confira os dados.`);
+
+    return { pts, warnings, total };
+  }
+
+  /* ---------- Interpolação (log-linear em D) ---------- */
+  function diameterAt(pts, P) {
+    if (!pts || pts.length < 2) return { d: null, reason: 'dados' };
+    let pmin = Infinity, pmax = -Infinity;
+    for (const q of pts) { pmin = Math.min(pmin, q.p); pmax = Math.max(pmax, q.p); }
+    if (P < pmin - 1e-9) return { d: null, reason: 'abaixo', pmin };
+    if (P > pmax + 1e-9) return { d: null, reason: 'acima', pmax };
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i], b = pts[i + 1];
+      const lo = Math.min(a.p, b.p), hi = Math.max(a.p, b.p);
+      if (P >= lo - 1e-9 && P <= hi + 1e-9) {
+        if (Math.abs(b.p - a.p) < 1e-12) return { d: a.d, p: P, seg: i };
+        const t = (P - a.p) / (b.p - a.p);
+        const ld = log10(a.d) + t * (log10(b.d) - log10(a.d));
+        return { d: Math.pow(10, ld), p: P, seg: i };
+      }
+    }
+    return { d: null, reason: 'dados' };
+  }
+
+  // % passante em um diâmetro (null abaixo do menor diâmetro ensaiado)
+  function passAt(pts, d) {
+    if (!pts || pts.length < 2) return null;
+    const first = pts[0], last = pts[pts.length - 1];
+    if (d > last.d * (1 + 1e-9)) return 100;
+    if (d < first.d * (1 - 1e-9)) return null;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i], b = pts[i + 1];
+      if (d >= a.d * (1 - 1e-9) && d <= b.d * (1 + 1e-9)) {
+        const t = (log10(d) - log10(a.d)) / (log10(b.d) - log10(a.d));
+        return a.p + t * (b.p - a.p);
+      }
+    }
+    return null;
+  }
+
+  /* ---------- Coeficientes e classificação ---------- */
+  function coefficients(pts) {
+    const D10 = diameterAt(pts, 10), D15 = diameterAt(pts, 15), D30 = diameterAt(pts, 30), D60 = diameterAt(pts, 60), D85 = diameterAt(pts, 85);
+    const ok = (x) => x && x.d != null;
+    const Cu = ok(D10) && ok(D60) ? D60.d / D10.d : null;
+    const Cc = ok(D10) && ok(D30) && ok(D60) ? (D30.d * D30.d) / (D10.d * D60.d) : null;
+    return { D10, D15, D30, D60, D85, Cu, Cc };
+  }
+
+  function classifyCu(cu) {
+    if (cu == null) return null;
+    if (cu < 5)   return { key: 'uniforme', tone: 'warn', label: 'Muito uniforme', note: 'Cu < 5 — solo mal graduado' };
+    if (cu <= 15) return { key: 'media',    tone: 'info', label: 'Uniformidade média', note: 'Cu entre 5 e 15' };
+    return { key: 'hetero', tone: 'ok', label: 'Heterogêneo', note: 'Cu > 15 — solo bem graduado' };
+  }
+  function classifyCc(cc) {
+    if (cc == null) return null;
+    if (cc >= 1 && cc <= 3) return { key: 'dentro', tone: 'ok', label: 'Curva harmônica', note: '1 ≤ Cc ≤ 3 — bem graduado' };
+    return { key: 'fora', tone: 'warn', label: 'Fora de 1–3', note: 'Cc fora de 1–3 — mal graduado' };
+  }
+
+  // Patamar horizontal (graduação aberta / descontínua): ≥ 1 década com inclinação ≤ 5 %/década,
+  // em região interior da curva (10% ≤ passante ≤ 95%) — caudas de finos são naturalmente suaves.
+  function detectGap(pts) {
+    let best = null;
+    for (let i = 0; i < pts.length; i++) {
+      for (let j = i + 1; j < pts.length; j++) {
+        const a = pts[i], b = pts[j];
+        const ratio = b.d / a.d;
+        if (ratio >= 10 && (b.p - a.p) <= 5 * log10(ratio) && a.p >= 10 && b.p <= 95) {
+          if (!best || ratio > best.ratio) best = { dLo: a.d, dHi: b.d, pLo: a.p, pHi: b.p, ratio };
+        }
+      }
+    }
+    return best;
+  }
+
+  /* ---------- Composição granulométrica ---------- */
+  function composition(pts, sysId) {
+    const sys = SYSTEMS[sysId] || SYSTEMS.abnt;
+    const dmin = pts.length ? pts[0].d : null;
+    let approx = false;
+
+    function pEff(d) {
+      if (d === 0) return 0;
+      if (d === Infinity) return 100;
+      let v = passAt(pts, d);
+      // 0,06 mm (ABNT) não é uma peneira usual: se o ensaio parar na nº 200, usa-se 0,075 como limite prático
+      if (v == null && sysId === 'abnt' && Math.abs(d - 0.06) < 1e-9 && dmin != null && dmin <= 0.0751) {
+        approx = true; v = passAt(pts, dmin);
+      }
+      return v;
+    }
+
+    const pDmin = pts.length ? pts[0].p : null;
+    const sub = (s) => {
+      const ph = pEff(s.hi);
+      let pl = pEff(s.lo), partial = false;
+      if (pl == null && ph != null && s.hi > dmin) { pl = pDmin; partial = true; } // só a parte medida
+      return { ...s, partial, pct: ph != null && pl != null ? Math.max(0, ph - pl) : null };
+    };
+
+    const groups = [];
+    const fractions = [];
+    for (const g of sys.groups) {
+      const subs = g.subs.map(s => ({ ...sub(s), group: g.key }));
+      fractions.push(...subs);
+      const known = subs.filter(x => x.pct != null);
+      groups.push({
+        key: g.key, label: g.label, color: GROUP_COLORS[g.key],
+        pct: known.length ? known.reduce((a, x) => a + x.pct, 0) : null,
+        partial: subs.some(x => x.partial),
+      });
+    }
+
+    // parcela abaixo do menor diâmetro ensaiado (precisa de sedimentação para ser discriminada)
+    const lowest = sys.groups[0].subs[0].hi; // 0,002
+    const rest = dmin != null && dmin > lowest * (1 + 1e-9) ? { pct: pDmin, below: dmin } : null;
+
+    const finesP = pEff(sys.fineLimit);
+    return { system: sys.id, fractions, groups, rest, fines: finesP, siltClayUnknown: !!rest, approx, dmin };
+  }
+
+  // grupos SUCS (sempre com limites 4,75 e 0,075)
+  function sucsGroups(pts) {
+    const p475 = passAt(pts, 4.75), p075 = passAt(pts, 0.075);
+    if (p475 == null || p075 == null) return null;
+    return { gravel: 100 - p475, sand: Math.max(0, p475 - p075), fines: p075 };
+  }
+
+  function sucsPrelim(g, cu, cc) {
+    if (!g) return null;
+    if (g.fines >= 50)
+      return { symbol: 'ML · CL · MH · CH', name: 'Solo fino (≥ 50% passa na nº 200)', note: 'A classificação final exige LL e IP (Carta de Plasticidade).' };
+    const isG = g.gravel > g.sand;
+    const L = isG ? 'G' : 'S';
+    const base = isG ? 'Pedregulho' : 'Areia';
+    const grad = (cu != null && cc != null) ? (cc >= 1 && cc <= 3 && cu >= (isG ? 4 : 6)) : null;
+    if (g.fines < 5) {
+      if (grad == null) return { symbol: `${L}W ou ${L}P`, name: `${base} limpo`, note: 'Não foi possível calcular Cu e Cc (faltam dados de finos).' };
+      return grad
+        ? { symbol: `${L}W`, name: `${base} bem graduado`, note: `Cu ≥ ${isG ? 4 : 6} e 1 ≤ Cc ≤ 3, com menos de 5% de finos.` }
+        : { symbol: `${L}P`, name: `${base} mal graduado`, note: 'Não atende simultaneamente aos critérios de Cu e Cc.' };
+    }
+    if (g.fines <= 12) {
+      const w = grad == null ? 'W/P' : grad ? 'W' : 'P';
+      return { symbol: `${L}${w}-${L}M ou ${L}${w}-${L}C`, name: `${base} com 5–12% de finos (símbolo duplo)`, note: 'M ou C depende da plasticidade dos finos (LL e IP).' };
+    }
+    return { symbol: `${L}M ou ${L}C`, name: `${base} ${isG ? 'siltoso ou argiloso' : 'siltosa ou argilosa'}`, note: 'Mais de 12% de finos — M ou C depende de LL e IP.' };
+  }
+
+  // Hazen: k = C·D10² (D10 em cm → k em cm/s)
+  function hazen(D10mm, cu, C = 100) {
+    if (D10mm == null) return null;
+    const applicable = D10mm >= 0.1 && D10mm <= 3 && (cu == null || cu < 5);
+    const k = C * Math.pow(D10mm / 10, 2);
+    return { k, applicable, C };
+  }
+
+  /* ---------- Análise completa ---------- */
+  function analyze(e, sysId = 'abnt') {
+    const { pts, warnings, total } = buildCurve(e);
+    const valid = pts.length >= 2;
+    const out = { pts, warnings, total, valid, system: sysId };
+    if (!valid) return out;
+
+    const co = coefficients(pts);
+    out.coef = co;
+    out.cuClass = classifyCu(co.Cu);
+    out.ccClass = classifyCc(co.Cc);
+    out.gap = detectGap(pts);
+    out.comp = composition(pts, sysId);
+    out.sg = sucsGroups(pts);
+    out.sucs = sucsPrelim(out.sg, co.Cu, co.Cc);
+
+    // graduação (critério SUCS) + padrão de curva
+    let g;
+    const thr = out.sg && out.sg.gravel > out.sg.sand ? 4 : 6;
+    if (co.Cu == null || co.Cc == null) {
+      g = { key: 'indef', tone: 'muted', label: 'Indeterminado', behavior: 'D10 (ou D30/D60) fora da curva — complete a curva com dados de finos (sedimentação) para calcular Cu e Cc.' };
+    } else if (out.gap) {
+      g = { key: 'aberta', tone: 'bad', label: 'Graduação aberta (descontínua)', behavior: 'Patamar horizontal: ausência de frações intermediárias. Estrutura instável e difícil de compactar.' };
+    } else if (co.Cc >= 1 && co.Cc <= 3 && co.Cu >= thr) {
+      g = { key: 'bem', tone: 'ok', label: 'Bem graduado', behavior: 'Distribuição ampla e contínua de grãos. Alta compactação, resistência e estabilidade.' };
+    } else if (co.Cu < 5) {
+      g = { key: 'uniforme', tone: 'warn', label: 'Uniforme (mal graduado)', behavior: 'Grãos de tamanhos muito parecidos. Baixa compactação e alta permeabilidade (bom para filtros).' };
+    } else {
+      g = { key: 'mal', tone: 'warn', label: 'Mal graduado', behavior: 'Distribuição não harmônica (Cc fora de 1–3 ou Cu insuficiente): compactação inferior à de um solo bem graduado.' };
+    }
+    out.grading = g;
+    out.hazen = hazen(co.D10.d, co.Cu);
+    return out;
+  }
+
+  /* ---------- Exemplos (3 curvas-padrão + exemplo resolvido da aula) ---------- */
+  const mk = (arr) => arr.map(([d, v]) => ({ d: String(d).replace('.', ','), v: String(v).replace('.', ',') }));
+
+  const EXAMPLES = [
+    {
+      id: 'ex-bem', name: 'Solo bem graduado', color: '#16a34a', mode: 'passa',
+      desc: 'Pedregulho arenoso com finos — curva diagonal suave e contínua.',
+      rows: mk([[38, 100], [25, 92], [19, 84], [9.5, 66], [4.75, 48], [2, 40], [1.2, 36], [0.6, 28], [0.42, 24], [0.25, 19], [0.15, 14], [0.075, 11.5], [0.05, 10], [0.02, 8], [0.005, 5], [0.002, 3]]),
+    },
+    {
+      id: 'ex-uniforme', name: 'Solo uniforme', color: '#2563eb', mode: 'passa',
+      desc: 'Areia fina de duna — curva quase vertical, grãos de tamanho muito similar.',
+      rows: mk([[2, 100], [1.2, 100], [0.6, 99], [0.42, 88], [0.25, 40], [0.15, 6], [0.075, 1.5], [0.05, 1], [0.02, 0.5]]),
+    },
+    {
+      id: 'ex-aberta', name: 'Solo de graduação aberta', color: '#dc2626', mode: 'passa',
+      desc: 'Pedregulho + finos, sem areia — curva com patamar horizontal.',
+      rows: mk([[38, 100], [25, 93], [19, 82], [9.5, 58], [4.75, 43], [2, 40], [1.2, 39], [0.6, 38.5], [0.42, 38], [0.25, 37.5], [0.15, 36], [0.075, 33], [0.05, 29], [0.02, 21], [0.005, 13], [0.002, 8]]),
+    },
+  ];
+  const LESSON_EXAMPLE = {
+    id: 'ex-aula', name: 'Exemplo da aula (D10≈0,2 · D30≈0,6 · D60≈1,8)', color: '#d97706', mode: 'passa',
+    rows: mk([[25, 100], [19, 100], [9.5, 96], [4.75, 82], [2, 64], [1.2, 47], [0.6, 30], [0.42, 21], [0.25, 13], [0.15, 6], [0.075, 2]]),
+  };
+
+  const STD_ROWS = () => SIEVES.map(s => ({ d: String(s.d).replace('.', ','), v: '' }));
+
+  return {
+    SIEVES, SYSTEMS, GROUP_COLORS, EXAMPLES, LESSON_EXAMPLE, STD_ROWS,
+    toNum, fmtNum, fmtPct, fmtSci, sieveFor, clamp,
+    buildCurve, diameterAt, passAt, coefficients, classifyCu, classifyCc, detectGap,
+    composition, sucsGroups, sucsPrelim, hazen, analyze,
+  };
+})();
+
+
+/* ── xlsx.js ── */
+/* ==========================================================================
+   xlsx.js — leitura/escrita de planilhas sem bibliotecas externas
+   - gera .xlsx (ZIP "store" + SpreadsheetML), com fórmulas e imagem do gráfico
+   - lê .xlsx (usa DecompressionStream do navegador), .csv e texto colado
+   ========================================================================== */
+const GranuloIO = (() => {
+  'use strict';
+  const C = (typeof GranuloCore !== 'undefined') ? GranuloCore : require('./core.js');
+  const enc = new TextEncoder();
+  const dec = new TextDecoder('utf-8');
+
+  /* ------------------------------------------------------------------ ZIP */
+  const CRC_TABLE = (() => {
+    const t = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+      let c = n;
+      for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+      t[n] = c >>> 0;
+    }
+    return t;
+  })();
+  function crc32(bytes) {
+    let c = 0xFFFFFFFF;
+    for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  function zipStore(files) {
+    const parts = [], central = [];
+    let offset = 0;
+    const DOS_TIME = (12 << 11), DOS_DATE = ((2024 - 1980) << 9) | (1 << 5) | 1;
+    for (const f of files) {
+      const name = enc.encode(f.name);
+      const data = typeof f.data === 'string' ? enc.encode(f.data) : f.data;
+      const crc = crc32(data);
+      const lh = new DataView(new ArrayBuffer(30));
+      lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true);
+      lh.setUint16(8, 0, true); lh.setUint16(10, DOS_TIME, true); lh.setUint16(12, DOS_DATE, true);
+      lh.setUint32(14, crc, true); lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true);
+      lh.setUint16(26, name.length, true); lh.setUint16(28, 0, true);
+      parts.push(new Uint8Array(lh.buffer), name, data);
+
+      const ch = new DataView(new ArrayBuffer(46));
+      ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true);
+      ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true); ch.setUint16(12, DOS_TIME, true); ch.setUint16(14, DOS_DATE, true);
+      ch.setUint32(16, crc, true); ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true);
+      ch.setUint16(28, name.length, true); ch.setUint32(42, offset, true);
+      central.push(new Uint8Array(ch.buffer), name);
+      offset += 30 + name.length + data.length;
+    }
+    const cdSize = central.reduce((s, x) => s + x.length, 0);
+    const end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+    end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+    const all = [...parts, ...central, new Uint8Array(end.buffer)];
+    const out = new Uint8Array(all.reduce((s, x) => s + x.length, 0));
+    let p = 0;
+    for (const x of all) { out.set(x, p); p += x.length; }
+    return out;
+  }
+
+  async function inflateRaw(bytes) {
+    const ds = new DecompressionStream('deflate-raw');
+    const stream = new Blob([bytes]).stream().pipeThrough(ds);
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+
+  async function unzip(buf) {
+    const u8 = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+    const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    let eocd = -1;
+    for (let i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--) {
+      if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+    }
+    if (eocd < 0) throw new Error('Arquivo não é um .xlsx válido.');
+    const n = dv.getUint16(eocd + 10, true);
+    let p = dv.getUint32(eocd + 16, true);
+    const entries = {};
+    for (let i = 0; i < n; i++) {
+      if (dv.getUint32(p, true) !== 0x02014b50) break;
+      const method = dv.getUint16(p + 10, true);
+      const csize = dv.getUint32(p + 20, true);
+      const nlen = dv.getUint16(p + 28, true), elen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true);
+      const lho = dv.getUint32(p + 42, true);
+      const name = dec.decode(u8.subarray(p + 46, p + 46 + nlen));
+      entries[name] = { method, csize, lho };
+      p += 46 + nlen + elen + clen;
+    }
+    const read = async (name) => {
+      const e = entries[name];
+      if (!e) return null;
+      const nl = dv.getUint16(e.lho + 26, true), el = dv.getUint16(e.lho + 28, true);
+      const start = e.lho + 30 + nl + el;
+      const raw = u8.subarray(start, start + e.csize);
+      if (e.method === 0) return raw;
+      if (e.method === 8) {
+        if (typeof DecompressionStream === 'undefined') throw new Error('Este navegador não consegue abrir .xlsx — salve a planilha como CSV.');
+        return inflateRaw(raw);
+      }
+      throw new Error('Compressão de .xlsx não suportada.');
+    };
+    return { names: Object.keys(entries), read };
+  }
+
+  /* ------------------------------------------------------------ XML utils */
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const unesc = (s) => s.replace(/&(#x?[0-9a-fA-F]+|amp|lt|gt|quot|apos);/g, (m, g) => {
+    if (g[0] === '#') return String.fromCodePoint(g[1] === 'x' || g[1] === 'X' ? parseInt(g.slice(2), 16) : parseInt(g.slice(1), 10));
+    return { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" }[g];
+  });
+  const colName = (i) => { let s = ''; i++; while (i > 0) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
+  const colIndex = (letters) => { let n = 0; for (const ch of letters) n = n * 26 + (ch.charCodeAt(0) - 64); return n - 1; };
+  const attrs = (str) => { const o = {}; str.replace(/([\w:.-]+)\s*=\s*"([^"]*)"/g, (_, k, v) => { o[k] = unesc(v); }); return o; };
+
+  /* ---------------------------------------------------------- Escrita XLSX */
+  // estilos: 0 normal | 1 cabeçalho | 2 título | 3 0,00 | 4 0,0 | 5 nota | 6 0,000 | 7 negrito
+  const STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<numFmts count="2"><numFmt numFmtId="164" formatCode="0.0"/><numFmt numFmtId="165" formatCode="0.000"/></numFmts>
+<fonts count="4">
+<font><sz val="11"/><name val="Calibri"/></font>
+<font><b/><sz val="11"/><name val="Calibri"/></font>
+<font><b/><sz val="14"/><color rgb="FF1E3A5F"/><name val="Calibri"/></font>
+<font><i/><sz val="10"/><color rgb="FF6B7280"/><name val="Calibri"/></font>
+</fonts>
+<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFDCEBFA"/><bgColor indexed="64"/></patternFill></fill></fills>
+<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>
+<border><left/><right/><top/><bottom style="thin"><color rgb="FF9DB4CC"/></bottom><diagonal/></border></borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="8">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="2" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
+<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
+<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+</cellXfs>
+<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`;
+
+  function cellXml(ref, c) {
+    if (c == null || c === '') return '';
+    let v = c, s = null, f = null;
+    if (typeof c === 'object') { v = c.v; s = c.s; f = c.f; }
+    const sa = s != null ? ` s="${s}"` : '';
+    if (f != null) {
+      if (typeof v === 'string') return `<c r="${ref}"${sa} t="str"><f>${esc(f)}</f><v>${esc(v)}</v></c>`;
+      return `<c r="${ref}"${sa}><f>${esc(f)}</f>${v == null || !isFinite(v) ? '' : `<v>${v}</v>`}</c>`;
+    }
+    if (typeof v === 'number') return isFinite(v) ? `<c r="${ref}"${sa}><v>${v}</v></c>` : '';
+    return `<c r="${ref}"${sa} t="inlineStr"><is><t xml:space="preserve">${esc(v)}</t></is></c>`;
+  }
+
+  function sheetXml(sh, hasDrawing) {
+    const cols = sh.cols && sh.cols.length
+      ? `<cols>${sh.cols.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('')}</cols>` : '';
+    const rows = sh.rows.map((r, i) => {
+      const cells = r.map((c, j) => cellXml(colName(j) + (i + 1), c)).join('');
+      const ht = sh.rowHeights && sh.rowHeights[i] ? ` ht="${sh.rowHeights[i]}" customHeight="1"` : '';
+      return cells || ht ? `<row r="${i + 1}"${ht}>${cells}</row>` : '';
+    }).join('');
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">${sh.freeze ? `<sheetViews><sheetView workbookViewId="0"><pane ySplit="${sh.freeze}" topLeftCell="A${sh.freeze + 1}" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>` : ''}${cols}<sheetData>${rows}</sheetData><pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>${hasDrawing ? '<drawing r:id="rId1"/>' : ''}</worksheet>`;
+  }
+
+  function safeSheetName(name, used) {
+    let n = String(name).replace(/[\[\]:*?\/\\]/g, '-').replace(/^'+|'+$/g, '').trim().slice(0, 31) || 'Ensaio';
+    let base = n, k = 2;
+    while (used.has(n.toLowerCase())) { const suf = ` (${k++})`; n = base.slice(0, 31 - suf.length) + suf; }
+    used.add(n.toLowerCase());
+    return n;
+  }
+
+  // sheets: [{name, rows, cols, freeze, image:{png:Uint8Array,w,h}}]
+  function buildXlsx(sheets) {
+    const used = new Set();
+    sheets = sheets.map(s => ({ ...s, name: safeSheetName(s.name, used) }));
+    const files = [];
+    let drawingN = 0, imageN = 0;
+    const ctSheets = [], wbSheets = [], wbRels = [];
+
+    sheets.forEach((sh, i) => {
+      const n = i + 1;
+      const hasImg = !!sh.image;
+      files.push({ name: `xl/worksheets/sheet${n}.xml`, data: sheetXml(sh, hasImg) });
+      ctSheets.push(`<Override PartName="/xl/worksheets/sheet${n}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`);
+      wbSheets.push(`<sheet name="${esc(sh.name)}" sheetId="${n}" r:id="rId${n}"/>`);
+      wbRels.push(`<Relationship Id="rId${n}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${n}.xml"/>`);
+      if (hasImg) {
+        drawingN++; imageN++;
+        files.push({ name: `xl/worksheets/_rels/sheet${n}.xml.rels`, data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing${drawingN}.xml"/></Relationships>` });
+        const cx = Math.round(sh.image.w * 9525), cy = Math.round(sh.image.h * 9525);
+        files.push({ name: `xl/drawings/drawing${drawingN}.xml`, data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><xdr:oneCellAnchor><xdr:from><xdr:col>0</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from><xdr:ext cx="${cx}" cy="${cy}"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="2" name="Curva granulométrica"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor></xdr:wsDr>` });
+        files.push({ name: `xl/drawings/_rels/drawing${drawingN}.xml.rels`, data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image${imageN}.png"/></Relationships>` });
+        files.push({ name: `xl/media/image${imageN}.png`, data: sh.image.png });
+        ctSheets.push(`<Override PartName="/xl/drawings/drawing${drawingN}.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>`);
+      }
+    });
+    const stN = sheets.length + 1;
+    wbRels.push(`<Relationship Id="rId${stN}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>`);
+
+    files.unshift(
+      { name: '[Content_Types].xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${ctSheets.join('')}</Types>` },
+      { name: '_rels/.rels', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>` },
+      { name: 'xl/workbook.xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${wbSheets.join('')}</sheets></workbook>` },
+      { name: 'xl/_rels/workbook.xml.rels', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${wbRels.join('')}</Relationships>` },
+      { name: 'xl/styles.xml', data: STYLES },
+    );
+    return zipStore(files);
+  }
+
+  /* ------------------------------------------ Relatório de ensaios (Excel) */
+  // items: [{ name, ensaio, a (analyze) }]
+  function buildReport(items, opts = {}) {
+    const sys = C.SYSTEMS[opts.system] || C.SYSTEMS.abnt;
+    const today = new Date().toLocaleDateString('pt-BR');
+    const num = (x, s) => (x == null || !isFinite(x)) ? '' : { v: x, s };
+
+    const head = ['Ensaio', 'D10 (mm)', 'D30 (mm)', 'D60 (mm)', 'Cu = D60/D10', 'Cc = D30²/(D10×D60)', 'Classificação (Cu)', 'Classificação (Cc)', 'Graduação', 'SUCS (preliminar)', '% Pedregulho', '% Areia', '% Silte', '% Argila', '% Finos sem sedimentação', 'D15 (mm)', 'D85 (mm)'];
+    const rows = [
+      [{ v: 'Análise granulométrica — resumo', s: 2 }],
+      [{ v: `Frações: ${sys.name} · gerado em ${today}`, s: 5 }],
+      [],
+      head.map(h => ({ v: h, s: 1 })),
+    ];
+    items.forEach((it, i) => {
+      const r = 5 + i, a = it.a;
+      if (!a || !a.valid) { rows.push([it.name, { v: 'dados insuficientes', s: 5 }]); return; }
+      const co = a.coef, g = (k) => a.comp.groups.find(x => x.key === k);
+      rows.push([
+        it.name,
+        num(co.D10.d, 6), num(co.D30.d, 6), num(co.D60.d, 6),
+        { f: `IF(AND(ISNUMBER(B${r}),ISNUMBER(D${r})),D${r}/B${r},"")`, v: co.Cu == null ? '' : co.Cu, s: 3 },
+        { f: `IF(AND(ISNUMBER(B${r}),ISNUMBER(C${r}),ISNUMBER(D${r})),C${r}^2/(B${r}*D${r}),"")`, v: co.Cc == null ? '' : co.Cc, s: 3 },
+        a.cuClass ? `${a.cuClass.label} (${a.cuClass.note})` : '—',
+        a.ccClass ? `${a.ccClass.label} (${a.ccClass.note})` : '—',
+        a.grading.label,
+        a.sucs ? a.sucs.symbol : '—',
+        num(g('pedregulho').pct, 4), num(g('areia').pct, 4), num(g('silte').pct, 4), num(g('argila').pct, 4),
+        a.comp.rest ? num(a.comp.rest.pct, 4) : '',
+        num(co.D15.d, 6), num(co.D85.d, 6),
+      ]);
+    });
+    rows.push([]);
+    rows.push([{ v: 'Critérios', s: 7 }]);
+    [
+      'Cu < 5: muito uniforme (mal graduado) · 5 ≤ Cu ≤ 15: uniformidade média · Cu > 15: heterogêneo (bem graduado).',
+      'Cc entre 1 e 3: curva harmônica (bem graduado); fora dessa faixa: mal graduado.',
+      'Bem graduado (SUCS): 1 ≤ Cc ≤ 3 e Cu ≥ 4 (pedregulho) ou Cu ≥ 6 (areia).',
+      'D10, D30 e D60 obtidos por interpolação linear do % passante contra log(D) entre pontos medidos.',
+    ].forEach(t => rows.push([{ v: t, s: 5 }]));
+
+    const sheets = [{ name: 'Resumo', rows, cols: [34, 11, 11, 11, 14, 18, 36, 36, 30, 22, 13, 11, 11, 11, 16, 11, 11], rowHeights: { 3: 32 }, }];
+    if (opts.png) sheets.push({ name: 'Gráfico', rows: [[]], image: opts.png });
+
+    items.forEach(it => {
+      const a = it.a;
+      const hdr = ['Diâmetro (mm)', '% Passante', '% Retida acumulada', 'Peneira'].map(h => ({ v: h, s: 1 }));
+      const r = [hdr];
+      if (a && a.pts.length) {
+        [...a.pts].sort((x, y) => y.d - x.d).forEach((p, k) => {
+          const sv = C.sieveFor(p.d);
+          const row = k + 2;
+          r.push([
+            { v: p.d, s: p.d < 0.1 ? 6 : 0 },
+            { v: Math.round(p.p * 1e6) / 1e6, s: 4 },
+            { f: `100-B${row}`, v: 100 - p.p, s: 4 },
+            sv ? sv.label : (p.d < 0.075 ? 'sedimentação' : ''),
+          ]);
+        });
+      }
+      sheets.push({ name: it.name, rows: r, cols: [15, 13, 19, 14], freeze: 1 });
+    });
+    return buildXlsx(sheets);
+  }
+
+  /* ------------------------------------------------------------- Leitura */
+  async function readXlsx(buf) {
+    const z = await unzip(buf);
+    const text = async (n) => { const b = await z.read(n); return b ? dec.decode(b) : null; };
+    const wb = await text('xl/workbook.xml');
+    if (!wb) throw new Error('Arquivo .xlsx sem workbook.');
+    const rels = await text('xl/_rels/workbook.xml.rels') || '';
+    const relMap = {};
+    (rels.match(/<Relationship\b[^>]*>/g) || []).forEach(t => { const a = attrs(t); relMap[a.Id] = a.Target; });
+    const sst = [];
+    const sstXml = await text('xl/sharedStrings.xml');
+    if (sstXml) {
+      (sstXml.match(/<si\b[\s\S]*?<\/si>|<si\s*\/>/g) || []).forEach(si => {
+        const noPh = si.replace(/<rPh\b[\s\S]*?<\/rPh>/g, '');
+        let t = '';
+        noPh.replace(/<t\b[^>]*>([\s\S]*?)<\/t>/g, (_, x) => { t += unesc(x); return ''; });
+        sst.push(t);
+      });
+    }
+    const out = [];
+    for (const tag of (wb.match(/<sheet\b[^>]*>/g) || [])) {
+      const a = attrs(tag);
+      let target = relMap[a['r:id']];
+      if (!target) continue;
+      target = target.startsWith('/') ? target.slice(1) : 'xl/' + target.replace(/^\.\//, '');
+      const xml = await text(target);
+      if (!xml) continue;
+      const rows = [];
+      const re = /<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g;
+      let m;
+      while ((m = re.exec(xml))) {
+        const ca = attrs(m[1]);
+        const ref = /^([A-Z]+)(\d+)$/.exec(ca.r || '');
+        if (!ref) continue;
+        const ci = colIndex(ref[1]), ri = parseInt(ref[2], 10) - 1;
+        const inner = m[2] || '';
+        let val = null;
+        if (ca.t === 'inlineStr') {
+          let t = ''; inner.replace(/<t\b[^>]*>([\s\S]*?)<\/t>/g, (_, x) => { t += unesc(x); return ''; }); val = t;
+        } else {
+          const vm = /<v>([\s\S]*?)<\/v>/.exec(inner);
+          if (vm) {
+            const raw = unesc(vm[1]);
+            if (ca.t === 's') val = sst[parseInt(raw, 10)] ?? '';
+            else if (ca.t === 'str' || ca.t === 'e') val = raw;
+            else if (ca.t === 'b') val = raw === '1';
+            else { const n = parseFloat(raw); val = isFinite(n) ? n : raw; }
+          }
+        }
+        if (val === null || val === '') continue;
+        (rows[ri] || (rows[ri] = []))[ci] = val;
+      }
+      out.push({ name: unesc(a.name || 'Planilha'), rows: Array.from(rows, r => r ? Array.from(r, x => x ?? null) : []) });
+    }
+    return out;
+  }
+
+  function parseText(text) {
+    const lines = text.replace(/\r/g, '').split('\n').map(l => l.replace(/\s+$/, '')).filter(l => l.trim() !== '');
+    if (!lines.length) return [];
+    const has = (ch) => lines.some(l => l.includes(ch));
+    let split;
+    if (has('\t')) split = (l) => l.split('\t');
+    else if (has(';')) split = (l) => l.split(';');
+    else if (has(',')) {
+      const commaOk = lines.every(l => l.split(',').every(x => x.trim() === '' || isFinite(Number(x)) || /[A-Za-zÀ-ÿ%]/.test(x)))
+        && new Set(lines.map(l => l.split(',').length)).size === 1 && lines[0].split(',').length >= 2;
+      split = commaOk ? (l) => l.split(',') : (l) => l.trim().split(/\s+/);
+    } else split = (l) => l.trim().split(/\s+/);
+    return lines.map(l => split(l).map(x => { x = x.trim().replace(/^"|"$/g, ''); return x === '' ? null : x; }));
+  }
+
+  // converte uma tabela (linhas × colunas) em ensaios
+  function rowsToEnsaios(rows, sheetName = 'Ensaio') {
+    const R = rows.filter(r => r && r.some(c => c != null && c !== ''));
+    if (R.length < 2) return [];
+    const isNum = (x) => x != null && isFinite(C.toNum(x));
+    // primeira linha cuja 1ª coluna é número
+    let start = R.findIndex(r => isNum(r[0]) && r.slice(1).some(isNum));
+    if (start < 0) return [];
+    let header = null;
+    if (start > 0) header = R[start - 1];
+    const data = [];
+    for (let i = start; i < R.length; i++) if (isNum(R[i][0])) data.push(R[i]);
+    const ncol = Math.max(...data.map(r => r.length));
+
+    let dScale = 1;
+    if (header && header[0] && /µm|μm|micr[oô]n|\(um\)/i.test(String(header[0]))) dScale = 0.001;
+
+    let series = [];
+    for (let j = 1; j < ncol; j++) {
+      const vals = data.filter(r => isNum(r[j]));
+      if (vals.length < 2) continue;
+      const h = header && header[j] != null ? String(header[j]).trim() : '';
+      let mode = 'passa';
+      if (/massa|\(g\)|peso/i.test(h)) mode = 'massa';
+      else if (/retid/i.test(h) && !/passa/i.test(h)) mode = 'retida';
+      series.push({ j, h, mode });
+    }
+    // planilha exportada pelo app: passante + retida → fica só a passante
+    if (series.some(s => s.mode === 'passa') && series.some(s => s.mode === 'retida') && series.length === 2)
+      series = series.filter(s => s.mode === 'passa');
+
+    const generic = /^(%|porcentagem|massa|peso|passa|retid|diâmetro|diametro)/i;
+    const fmt = (n) => String(Number(Number(n).toPrecision(10))).replace('.', ',');
+    return series.map((s, k) => {
+      let name;
+      if (series.length === 1) name = (s.h && !generic.test(s.h)) ? s.h : sheetName;
+      else name = (s.h && !generic.test(s.h)) ? s.h : `${sheetName} ${k + 1}`;
+      return {
+        name, mode: s.mode,
+        rows: data.filter(r => isNum(r[s.j])).map(r => ({ d: fmt(C.toNum(r[0]) * dScale), v: fmt(C.toNum(r[s.j])) })),
+      };
+    });
+  }
+
+  async function importFile(file) {
+    const lower = file.name.toLowerCase();
+    const base = file.name.replace(/\.[^.]+$/, '');
+    if (lower.endsWith('.xlsx') || lower.endsWith('.xlsm')) {
+      const sheets = await readXlsx(await file.arrayBuffer());
+      const all = [];
+      for (const sh of sheets) {
+        if (/^(resumo|gr[aá]fico)$/i.test(sh.name)) continue;
+        all.push(...rowsToEnsaios(sh.rows, sh.name));
+      }
+      return all;
+    }
+    if (lower.endsWith('.xls')) throw new Error('Formato .xls antigo: salve como .xlsx ou CSV.');
+    const buf = await file.arrayBuffer();
+    let txt;
+    try { txt = new TextDecoder('utf-8', { fatal: true }).decode(buf); }
+    catch { txt = new TextDecoder('windows-1252').decode(buf); }
+    return rowsToEnsaios(parseText(txt), base);
+  }
+
+  return { buildXlsx, buildReport, readXlsx, parseText, rowsToEnsaios, importFile, zipStore, crc32 };
+})();
+
+
+/* ── chart.js ── */
+/* ==========================================================================
+   chart.js — gráfico granulométrico em SVG (eixo X logarítmico)
+   - eixo Y esquerdo: % passante · direito: % retida acumulada
+   - peneiras no topo, escala de frações + sedimentação embaixo
+   - linhas guia D10/D30/D60, limites das frações, hover em todos os pontos
+   ========================================================================== */
+const GranuloChart = (() => {
+  'use strict';
+  const C = GranuloCore;
+  const FONT = 'system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
+  const INK = '#1f2a3d', MUTED = '#5b6b82', SOFT = '#8794a8';
+  const GRID_MAJOR = '#c5cfdd', GRID_MINOR = '#e8edf4', FRAME = '#8fa1b8';
+  const SED_BLUE = '#2f80c9', LIM_AMBER = '#d9822b';
+  const CELL_FILL = { argila: '#f3dfd2', silte: '#dcefe3', areia: '#fbefc9', pedregulho: '#e3e8ef' };
+  const SED_LIMIT = 0.075; // limite físico do peneiramento (nº 200)
+
+  const aw = (t, fs) => String(t).length * fs * 0.57;
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const r1 = (n) => Math.round(n * 10) / 10;
+  const log = Math.log10;
+
+  function T(x, y, txt, o = {}) {
+    const { size = 11, fill = MUTED, anchor = 'middle', weight = 400, rot = 0, ls, base, opacity } = o;
+    const tr = rot ? ` transform="rotate(${rot} ${r1(x)} ${r1(y)})"` : '';
+    return `<text x="${r1(x)}" y="${r1(y)}" font-size="${size}" fill="${fill}" text-anchor="${anchor}" font-weight="${weight}"${ls ? ` letter-spacing="${ls}"` : ''}${base ? ` dominant-baseline="${base}"` : ''}${opacity ? ` opacity="${opacity}"` : ''}${tr}>${esc(txt)}</text>`;
+  }
+  const L = (x1, y1, x2, y2, stroke, w = 1, dash, extra = '') =>
+    `<line x1="${r1(x1)}" y1="${r1(y1)}" x2="${r1(x2)}" y2="${r1(y2)}" stroke="${stroke}" stroke-width="${w}"${dash ? ` stroke-dasharray="${dash}"` : ''}${extra}/>`;
+
+  function fractionAt(d, sysId) {
+    const sys = C.SYSTEMS[sysId] || C.SYSTEMS.abnt;
+    for (const g of sys.groups) for (const s of g.subs) {
+      if (d > s.lo && d <= s.hi) return g.subs.length > 1 ? `${g.label} ${s.label.toLowerCase()}` : g.label;
+    }
+    return '';
+  }
+
+  function render(opts) {
+    const { width: W, height: H, series = [], show = {}, system = 'abnt', forExport = false, title = 'Curva granulométrica' } = opts;
+    const sys = C.SYSTEMS[system] || C.SYSTEMS.abnt;
+    const vis = series.filter(s => s.a && s.a.valid);
+    const narrow = W < 560;
+
+    /* ----- geometria ----- */
+    const ml = narrow ? 42 : 58, mr = narrow ? 42 : 58;
+    const titleH = forExport ? 38 : 0;
+    const sieveH = narrow ? 46 : 58;
+    const tickH = 18, axisTitleH = 20, bracketH = 24, stripH = narrow ? 42 : 48;
+    const limH = show.limits ? 112 : 0;
+    // legenda (apenas exportação)
+    let legendRows = [];
+    if (forExport && vis.length) {
+      let row = [], w = 0;
+      for (const s of vis) {
+        const co = s.a.coef;
+        const txt = `${s.name}  (Cu ${C.fmtNum(co.Cu)} · Cc ${C.fmtNum(co.Cc)})`;
+        const iw = 22 + aw(txt, 12) + 18;
+        if (w + iw > W - 40 && row.length) { legendRows.push(row); row = []; w = 0; }
+        row.push({ s, txt, iw, x: w }); w += iw;
+      }
+      if (row.length) legendRows.push(row);
+    }
+    const legendH = forExport ? legendRows.length * 22 + 14 : 0;
+
+    const y0 = titleH + sieveH + 4;
+    const bottomBlock = tickH + axisTitleH + bracketH + 6 + stripH + limH + 12 + legendH;
+    const x0 = ml, x1 = W - mr;
+    const y1 = opts.plotH ? y0 + opts.plotH : Math.max(y0 + 160, H - bottomBlock);
+    const totalH = y1 + bottomBlock;
+    const pw = x1 - x0, ph = y1 - y0;
+
+    /* ----- escala X (log) ----- */
+    let dmin = Infinity, dmax = -Infinity;
+    for (const s of vis) { dmin = Math.min(dmin, s.a.pts[0].d); dmax = Math.max(dmax, s.a.pts[s.a.pts.length - 1].d); }
+    const lmin = Math.floor(log(Math.min(0.001, isFinite(dmin) ? dmin : 0.001)) + 1e-9);
+    const lmax = Math.ceil(log(Math.max(100, isFinite(dmax) ? dmax : 100)) - 1e-9);
+    const X = (d) => x0 + (log(d) - lmin) / (lmax - lmin) * pw;
+    const invX = (px) => Math.pow(10, lmin + (px - x0) / pw * (lmax - lmin));
+    const Y = (p) => y1 - p / 100 * ph;
+    const XC = (d) => X(Math.min(Math.max(d, Math.pow(10, lmin)), Math.pow(10, lmax)));
+    const dec = pw / (lmax - lmin);
+
+    const o = [];
+    o.push(`<rect x="0" y="0" width="${W}" height="${totalH}" fill="#ffffff"/>`);
+    if (forExport) {
+      o.push(T(x0, 24, title, { size: 17, fill: INK, anchor: 'start', weight: 700 }));
+      o.push(T(x1, 24, `${sys.name} · ${new Date().toLocaleDateString('pt-BR')}`, { size: 11, fill: SOFT, anchor: 'end' }));
+    }
+
+    /* ----- plano de fundo da fração fina (sedimentação) ----- */
+    if (show.limits) {
+      const xs = XC(SED_LIMIT);
+      o.push(`<rect x="${r1(x0)}" y="${r1(y0)}" width="${r1(xs - x0)}" height="${r1(ph)}" fill="#e9f2fb" opacity="0.75"/>`);
+      if (xs - x0 > 120) o.push(T(x0 + 8, y0 + 15, 'FRAÇÃO FINA · SEDIMENTAÇÃO', { size: 10, fill: SED_BLUE, anchor: 'start', weight: 600, ls: '.05em' }));
+    }
+
+    /* ----- grade ----- */
+    for (let p = 0; p <= 100; p += 5) {
+      const major = p % 10 === 0;
+      o.push(L(x0, Y(p), x1, Y(p), major ? GRID_MAJOR : GRID_MINOR, major ? 0.9 : 0.7));
+    }
+    for (let k = lmin; k <= lmax; k++) {
+      for (let m = 1; m <= 9; m++) {
+        const d = m * Math.pow(10, k);
+        if (log(d) > lmax + 1e-9) break;
+        const x = X(d);
+        o.push(L(x, y0, x, y1, m === 1 ? GRID_MAJOR : GRID_MINOR, m === 1 ? 0.9 : 0.7));
+      }
+    }
+
+    /* ----- peneiras (topo) ----- */
+    const sieves = C.SIEVES.filter(s => s.d >= Math.pow(10, lmin) && s.d <= Math.pow(10, lmax));
+    const placed = [];
+    [...sieves].sort((a, b) => b.prio - a.prio).forEach(s => {
+      const x = X(s.d);
+      if (placed.every(px => Math.abs(px - x) >= 12.5)) placed.push(x); else s._skip = true;
+    });
+    for (const s of sieves) {
+      const x = X(s.d);
+      if (show.sieves) o.push(L(x, y0, x, y1, '#b6c3d4', 0.9, '4 4'));
+      if (s._skip) { delete s._skip; o.push(L(x, y0 - 3, x, y0, SOFT, 1)); continue; }
+      o.push(L(x, y0 - 5, x, y0, SOFT, 1));
+      o.push(T(x + 4, y0 - 8, s.label, { size: 10.5, fill: MUTED, anchor: 'start', rot: -90 }));
+    }
+    o.push(T(x0 - 6, y0 - 10, narrow ? '' : 'Peneiras', { size: 10, fill: SOFT, anchor: 'end', weight: 600 }));
+
+    /* ----- moldura ----- */
+    o.push(`<rect x="${r1(x0)}" y="${r1(y0)}" width="${r1(pw)}" height="${r1(ph)}" fill="none" stroke="${FRAME}" stroke-width="1.2"/>`);
+
+    /* ----- limites das frações ----- */
+    const stripTop = y1 + tickH + axisTitleH + bracketH + 6;
+    const stripBot = stripTop + stripH;
+    const bounds = sys.boundaries.filter(b => b.d > Math.pow(10, lmin) * 1.0001 && b.d < Math.pow(10, lmax));
+    if (show.limits) {
+      for (const b of bounds) {
+        const x = X(b.d), col = b.sed ? SED_BLUE : LIM_AMBER;
+        o.push(L(x, y0, x, y1, col, 1.5, '6 4'));
+        o.push(L(x, stripTop - 2, x, stripBot + 6, col, 1.5, '6 4'));
+        const lab = b.sed ? `Sedim. · ${C.fmtNum(b.d)} mm` : `${b.short} · ${C.fmtNum(b.d)} mm`;
+        o.push(T(x - 3.5, stripBot + 12, lab, { size: 10.5, fill: col, anchor: 'start', weight: 600, rot: 90 }));
+      }
+    }
+
+    /* ----- curvas ----- */
+    const curves = [];
+    for (const s of vis) {
+      const pts = s.a.pts;
+      const path = pts.map((q, i) => `${i ? 'L' : 'M'}${r1(X(q.d))},${r1(Y(q.p))}`).join('');
+      curves.push(`<path d="${path}" fill="none" stroke="${s.color}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>`);
+    }
+    o.push(...curves);
+    for (const s of vis) for (const q of s.a.pts)
+      o.push(`<circle cx="${r1(X(q.d))}" cy="${r1(Y(q.p))}" r="3.6" fill="#fff" stroke="${s.color}" stroke-width="1.8"/>`);
+
+    /* ----- linhas guia D10 / D30 / D60 ----- */
+    const chips = [];
+    for (const s of vis) {
+      for (const [key, P] of [['D10', 10], ['D15', 15], ['D30', 30], ['D60', 60], ['D85', 85]]) {
+        if (!show[key.toLowerCase()]) continue;
+        const r = s.a.coef[key];
+        if (!r || r.d == null) continue;
+        const x = X(r.d), y = Y(P);
+        o.push(L(x0, y, x, y, s.color, 1.5, '6 4', ' opacity="0.9"'));
+        o.push(L(x, y, x, y1, s.color, 1.5, '6 4', ' opacity="0.9"'));
+        o.push(`<circle cx="${r1(x)}" cy="${r1(y)}" r="6" fill="#fff" fill-opacity="0.65" stroke="${s.color}" stroke-width="2.2"/>`);
+        o.push(`<circle cx="${r1(x)}" cy="${r1(y)}" r="1.8" fill="${s.color}"/>`);
+        chips.push({ x, txt: narrow ? `${key} ${C.fmtNum(r.d)}` : `${key} = ${C.fmtNum(r.d)} mm`, color: s.color });
+      }
+    }
+    chips.sort((a, b) => a.x - b.x);
+    const rowsEnd = [];
+    for (const c of chips) {
+      const cs = narrow ? 10 : 11;
+      const w = aw(c.txt, cs) + 12;
+      let left = c.x - w / 2;
+      left = Math.max(x0 + 2, Math.min(left, x1 - w - 2));
+      let row = 0;
+      while (rowsEnd[row] !== undefined && left < rowsEnd[row] + 3) row++;
+      rowsEnd[row] = left + w;
+      const cy = y1 - 10 - row * (narrow ? 17 : 19);
+      o.push(`<rect x="${r1(left)}" y="${r1(cy - 8)}" width="${r1(w)}" height="${narrow ? 15 : 16}" rx="8" fill="#fff" fill-opacity="0.94" stroke="${c.color}" stroke-width="1.2"/>`);
+      o.push(T(left + w / 2, cy + 3.6, c.txt, { size: cs, fill: c.color, weight: 700 }));
+    }
+
+    /* ----- eixos: Y ----- */
+    for (let p = 0; p <= 100; p += 10) {
+      const y = Y(p);
+      o.push(T(x0 - 7, y + 3.8, narrow ? String(p) : `${p}%`, { size: 10.5, anchor: 'end' }));
+      o.push(T(x1 + 7, y + 3.8, narrow ? String(100 - p) : `${100 - p}%`, { size: 10.5, anchor: 'start' }));
+    }
+    const cy = (y0 + y1) / 2;
+    o.push(T(narrow ? 11 : 14, cy, narrow ? 'PASSANTE (%)' : 'PORCENTAGEM QUE PASSA', { size: 10.5, fill: INK, weight: 600, rot: -90, ls: '.07em' }));
+    o.push(T(W - (narrow ? 11 : 14), cy, narrow ? 'RETIDA ACUM. (%)' : 'PORCENTAGEM RETIDA ACUMULADA', { size: 10.5, fill: INK, weight: 600, rot: 90, ls: '.07em' }));
+
+    /* ----- eixo X ----- */
+    for (let k = lmin; k <= lmax; k++) {
+      const dd = Math.pow(10, k);
+      o.push(T(X(dd), y1 + 14, C.fmtNum(dd, 1), { size: 11, fill: INK, weight: 600 }));
+      if (k < lmax) {
+        const digits = dec >= 150 ? [2, 3, 4, 5, 6, 7, 8, 9] : dec >= 85 ? [2, 5] : [];
+        for (const m of digits) o.push(T(X(m * dd), y1 + 13, String(m), { size: 9, fill: SOFT }));
+      }
+    }
+    o.push(T((x0 + x1) / 2, y1 + tickH + 13, 'DIÂMETRO DOS GRÃOS (mm) — escala logarítmica', { size: 10.5, fill: INK, weight: 600, ls: '.06em' }));
+
+    /* ----- colchete: sedimentação × peneiramento ----- */
+    const by = y1 + tickH + axisTitleH + 6;
+    const xs = XC(SED_LIMIT);
+    const bracket = (xa, xb, color, label, short) => {
+      if (xb - xa < 8) return;
+      o.push(`<path d="M${r1(xa + 1)},${by + 5}V${by}H${r1(xb - 1)}V${by + 5}" fill="none" stroke="${color}" stroke-width="1.4"/>`);
+      const txt = [label, short].find(t => t && aw(t, 10.5) + 10 < xb - xa);
+      if (txt) o.push(T((xa + xb) / 2, by + 17, txt, { size: 10.5, fill: color, weight: 700, ls: '.04em' }));
+    };
+    bracket(x0, xs, SED_BLUE, 'SEDIMENTAÇÃO · densímetro (Lei de Stokes)', 'SEDIMENTAÇÃO');
+    bracket(xs, x1, '#475569', `PENEIRAMENTO · peneiras (nº 200 = ${C.fmtNum(SED_LIMIT)} mm)`, 'PENEIRAMENTO');
+
+    /* ----- faixa das frações (estilo papel semi-log da ABNT) ----- */
+    const rx = 14;
+    o.push(`<defs><clipPath id="gclip"><rect x="${r1(x0)}" y="${stripTop}" width="${r1(pw)}" height="${stripH}" rx="${rx}"/></clipPath></defs>`);
+    o.push('<g clip-path="url(#gclip)">');
+    const half = stripH / 2;
+    const fit = (txt, w, alts, fs) => [txt, ...alts].find(t => aw(t, fs) + 6 <= w) || '';
+    const SHORT = { Fina: ['F'], Fino: ['F'], Média: ['M'], Médio: ['M'], Grossa: ['G'], Grosso: ['G'], Pedregulho: ['Ped.', 'P'], Areia: ['Ar.'], Silte: ['Si.'], Argila: ['Ar.'] };
+    for (const g of sys.groups) {
+      const gx0 = XC(g.subs[0].lo === 0 ? 0 : g.subs[0].lo), gx1 = XC(g.subs[g.subs.length - 1].hi === Infinity ? Infinity : g.subs[g.subs.length - 1].hi);
+      const fill = CELL_FILL[g.key];
+      o.push(`<rect x="${r1(gx0)}" y="${stripTop}" width="${r1(gx1 - gx0)}" height="${stripH}" fill="${fill}"/>`);
+      if (g.subs.length === 1) {
+        const lab = fit(g.label, gx1 - gx0, SHORT[g.label] || [], 12);
+        if (lab) o.push(T((gx0 + gx1) / 2, stripTop + half + 4.5, lab, { size: 12, fill: INK, weight: 600 }));
+      } else {
+        o.push(L(gx0, stripTop + half, gx1, stripTop + half, '#fff', 1.3));
+        const lab = fit(g.label, gx1 - gx0, SHORT[g.label] || [], 12);
+        if (lab) o.push(T((gx0 + gx1) / 2, stripTop + half + half / 2 + 4.5, lab, { size: 12, fill: INK, weight: 600 }));
+        g.subs.forEach(s => {
+          const a = XC(s.lo), b = XC(s.hi);
+          const l2 = fit(s.label, b - a, SHORT[s.label] || [], 10.5);
+          if (l2) o.push(T((a + b) / 2, stripTop + half / 2 + 4, l2, { size: 10.5, fill: MUTED }));
+          if (s.lo !== g.subs[0].lo) o.push(L(a, stripTop, a, stripTop + half, '#fff', 1.3));
+        });
+      }
+      if (g.subs[0].lo !== 0) o.push(L(gx0, stripTop, gx0, stripBot, '#fff', 2));
+    }
+    o.push('</g>');
+    o.push(`<rect x="${r1(x0)}" y="${stripTop}" width="${r1(pw)}" height="${stripH}" rx="${rx}" fill="none" stroke="${FRAME}" stroke-width="1.2"/>`);
+    // marcas dos limites na faixa
+    if (show.limits) for (const b of bounds) o.push(L(X(b.d), stripTop, X(b.d), stripBot, b.sed ? SED_BLUE : LIM_AMBER, 1.6));
+
+    /* ----- legenda (exportação) ----- */
+    if (forExport) {
+      let ly = stripBot + limH + 26;
+      for (const row of legendRows) {
+        for (const it of row) {
+          const x = x0 + it.x;
+          o.push(`<rect x="${r1(x)}" y="${ly - 9}" width="16" height="4" rx="2" fill="${it.s.color}"/>`);
+          o.push(T(x + 22, ly - 1, it.txt, { size: 12, fill: INK, anchor: 'start' }));
+        }
+        ly += 22;
+      }
+    }
+
+    if (!vis.length && !forExport) {
+      o.push(`<rect x="${r1(x0 + pw / 2 - 170)}" y="${r1((y0 + y1) / 2 - 22)}" width="340" height="44" rx="12" fill="#fff" stroke="${GRID_MAJOR}"/>`);
+      o.push(T((x0 + x1) / 2, (y0 + y1) / 2 + 4.5, 'Preencha ao menos 2 pontos para traçar a curva', { size: 13, fill: MUTED }));
+    }
+
+    const summary = vis.length
+      ? `Curva granulométrica com ${vis.length} ensaio(s): ${vis.map(s => s.name).join(', ')}.`
+      : 'Curva granulométrica vazia.';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${r1(totalH)}" viewBox="0 0 ${W} ${r1(totalH)}" font-family='${FONT}' role="img" aria-label="${esc(summary)}" style="display:block;max-width:100%;touch-action:pan-y;-webkit-user-select:none;user-select:none">${o.join('')}</svg>`;
+
+    return {
+      svg,
+      geom: { W, H: totalH, x0, x1, y0, y1, lmin, lmax, X, Y, invX, system, plotW: pw, plotH: ph },
+      series: vis,
+    };
+  }
+
+  // altura ocupada fora da área de plotagem (para dimensionar o gráfico em tela cheia)
+  function chrome(width, show) {
+    const narrow = width < 560;
+    return (narrow ? 46 : 58) + 4 + 18 + 20 + 24 + 6 + (narrow ? 42 : 48) + (show && show.limits ? 112 : 0) + 12;
+  }
+
+  /* ------------------------------------------------------------ Hover */
+  function attachHover(container, tipEl) {
+    let model = null;
+    const NS = 'http://www.w3.org/2000/svg';
+    let hoverG = null, line = null;
+
+    function ensure(svg) {
+      hoverG = document.createElementNS(NS, 'g');
+      hoverG.setAttribute('pointer-events', 'none');
+      line = document.createElementNS(NS, 'line');
+      line.setAttribute('stroke', '#334155'); line.setAttribute('stroke-width', '1'); line.setAttribute('stroke-dasharray', '3 3');
+      line.setAttribute('opacity', '0.7');
+      hoverG.appendChild(line);
+      svg.appendChild(hoverG);
+      const hit = document.createElementNS(NS, 'rect');
+      hit.setAttribute('x', model.geom.x0); hit.setAttribute('y', model.geom.y0 - 6);
+      hit.setAttribute('width', model.geom.plotW); hit.setAttribute('height', model.geom.plotH + 6);
+      hit.setAttribute('fill', 'transparent'); hit.style.cursor = 'crosshair';
+      hit.dataset.hit = '1';
+      svg.appendChild(hit);
+    }
+
+    function hide() {
+      if (hoverG) while (hoverG.childNodes.length > 1) hoverG.removeChild(hoverG.lastChild);
+      if (line) line.setAttribute('visibility', 'hidden');
+      tipEl.hidden = true;
+    }
+
+    function at(ev) {
+      if (!model) return;
+      const svg = container.querySelector('svg');
+      if (!svg || !hoverG) return;
+      const g = model.geom;
+      const rect = svg.getBoundingClientRect();
+      const sc = rect.width / g.W;
+      const px = (ev.clientX - rect.left) / sc, py = (ev.clientY - rect.top) / sc;
+      if (px < g.x0 - 4 || px > g.x1 + 4 || py < g.y0 - 8 || py > g.y1 + 4) return hide();
+
+      // encaixe no ponto medido mais próximo (em px horizontais)
+      let snap = null, best = 11;
+      for (const s of model.series) for (const q of s.a.pts) {
+        const dx = Math.abs(g.X(q.d) - px);
+        if (dx < best) { best = dx; snap = q; }
+      }
+      const d = snap ? snap.d : g.invX(Math.min(g.x1, Math.max(g.x0, px)));
+      const x = g.X(d);
+
+      while (hoverG.childNodes.length > 1) hoverG.removeChild(hoverG.lastChild);
+      line.setAttribute('visibility', 'visible');
+      line.setAttribute('x1', x); line.setAttribute('x2', x); line.setAttribute('y1', g.y0); line.setAttribute('y2', g.y1);
+
+      const rowsHtml = [];
+      for (const s of model.series) {
+        const pts = s.a.pts;
+        if (d < pts[0].d * (1 - 1e-9) || d > pts[pts.length - 1].d * (1 + 1e-9)) continue;
+        const p = C.passAt(pts, d);
+        if (p == null) continue;
+        const measured = pts.some(q => Math.abs(q.d - d) / d < 1e-9);
+        const dot = document.createElementNS(NS, 'circle');
+        dot.setAttribute('cx', x); dot.setAttribute('cy', g.Y(p));
+        dot.setAttribute('r', measured ? 6.5 : 4.5);
+        dot.setAttribute('fill', measured ? s.color : '#fff');
+        dot.setAttribute('stroke', measured ? '#fff' : s.color); dot.setAttribute('stroke-width', measured ? 2.5 : 2);
+        hoverG.appendChild(dot);
+        rowsHtml.push(`<div class="tt-row"><i style="background:${s.color}"></i><b>${esc(s.name)}</b><span>passa <strong>${C.fmtPct(p)}</strong> · retida <strong>${C.fmtPct(100 - p)}</strong>${measured ? ' <em>ponto medido</em>' : ''}</span></div>`);
+      }
+      const sv = C.sieveFor(d, 0.012);
+      const frac = fractionAt(d, g.system);
+      tipEl.innerHTML = `<div class="tt-h">Ø ${C.fmtNum(d, 3)} mm${sv ? ` <span class="tt-chip">peneira ${esc(sv.label)}</span>` : (d < SED_LIMIT ? ' <span class="tt-chip sed">sedimentação</span>' : '')}${frac ? `<small>${esc(frac)}</small>` : ''}</div>${rowsHtml.join('') || '<div class="tt-row muted">Fora do intervalo ensaiado</div>'}`;
+      tipEl.hidden = false;
+      const cr = container.getBoundingClientRect();
+      const tw = tipEl.offsetWidth, th = tipEl.offsetHeight;
+      let tx = x * sc + 14, ty = (py * sc) - th - 12;
+      if (tx + tw > cr.width - 4) tx = x * sc - tw - 14;
+      if (tx < 4) tx = 4;
+      if (ty < 4) ty = py * sc + 16;
+      tipEl.style.transform = `translate(${Math.round(tx)}px,${Math.round(ty)}px)`;
+    }
+
+    container.addEventListener('pointermove', at);
+    container.addEventListener('pointerdown', at);
+    container.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') hide(); });
+
+    return {
+      setModel(m) { model = m; const svg = container.querySelector('svg'); hoverG = null; line = null; if (svg) ensure(svg); tipEl.hidden = true; },
+      hide,
+    };
+  }
+
+  /* --------------------------------------------------------- Exportação */
+  async function toPNGBlob(svgString, w, h, scale = 2) {
+    const img = new Image();
+    img.decoding = 'async';
+    const src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
+    await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('Falha ao rasterizar o gráfico')); img.src = src; });
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(w * scale); cv.height = Math.round(h * scale);
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    return new Promise((res, rej) => cv.toBlob(b => b ? res(b) : rej(new Error('Falha ao gerar PNG')), 'image/png'));
+  }
+
+  return { render, attachHover, toPNGBlob, fractionAt, chrome };
+})();
+
+
+/* ── app.js ── */
+/* ==========================================================================
+   app.js — interface
+   ========================================================================== */
+(() => {
+  'use strict';
+  const C = GranuloCore, IO = GranuloIO, CH = GranuloChart;
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const PALETTE = ['#2563eb', '#16a34a', '#dc2626', '#d97706', '#7c3aed', '#0891b2', '#db2777', '#65a30d', '#475569'];
+  const KEY = 'granulometria.v1';
+  const clone = (x) => JSON.parse(JSON.stringify(x));
+  const uid = () => 'e' + Math.random().toString(36).slice(2, 9);
+
+  /* ------------------------------------------------------------ estado */
+  function fresh() {
+    return {
+      ensaios: C.EXAMPLES.map(e => ({ id: e.id, name: e.name, color: e.color, mode: e.mode, rows: clone(e.rows), fundo: '', visible: true })),
+      sel: C.EXAMPLES[0].id,
+      show: { d10: false, d15: false, d30: false, d60: false, d85: false, limits: false, sieves: false },
+      system: 'abnt',
+    };
+  }
+  function load() {
+    try {
+      const s = JSON.parse(localStorage.getItem(KEY));
+      if (s && Array.isArray(s.ensaios) && s.ensaios.length) {
+        const f = fresh();
+        return { ...f, ...s, show: { ...f.show, ...(s.show || {}) } };
+      }
+    } catch (e) { /* sem storage */ }
+    return null;
+  }
+  let state = load() || fresh();
+  let saveT = 0;
+  const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignora */ } }, 250); };
+  const cur = () => state.ensaios.find(e => e.id === state.sel) || state.ensaios[0];
+
+  /* ------------------------------------------------------------ toast + desfazer */
+  let undoSnap = null;
+  function toast(msg, opt = {}) {
+    const el = document.createElement('div');
+    el.className = 'toast' + (opt.err ? ' err' : '');
+    el.innerHTML = `<span>${esc(msg)}</span>`;
+    if (opt.undo) {
+      const b = document.createElement('button'); b.textContent = 'Desfazer';
+      b.onclick = () => { if (undoSnap) { state.ensaios = undoSnap.ensaios; state.sel = undoSnap.sel; undoSnap = null; renderAll(); save(); } el.remove(); };
+      el.appendChild(b);
+    }
+    $('#toast').appendChild(el);
+    setTimeout(() => el.remove(), opt.undo ? 7000 : 3800);
+  }
+  const snapshot = () => { undoSnap = { ensaios: clone(state.ensaios), sel: state.sel }; };
+
+  /* ------------------------------------------------------------ análise */
+  let A = new Map();
+  function analyzeAll() {
+    A = new Map();
+    for (const e of state.ensaios) A.set(e.id, C.analyze(e, state.system));
+  }
+  const visibleSeries = () => state.ensaios.filter(e => e.visible).map(e => ({ id: e.id, name: e.name || 'Sem nome', color: e.color, a: A.get(e.id) }));
+
+  /* ------------------------------------------------------------ lista */
+  function renderList() {
+    $('#elist').innerHTML = state.ensaios.map(e => {
+      const a = A.get(e.id);
+      let meta = 'Sem dados suficientes';
+      if (a && a.valid) {
+        const co = a.coef;
+        meta = `Cu ${C.fmtNum(co.Cu)} · Cc ${C.fmtNum(co.Cc)} · <span class="tone-${a.grading.tone}">${esc(a.grading.label)}</span>`;
+      }
+      return `<li class="en ${e.id === state.sel ? 'sel' : ''} ${e.visible ? '' : 'off'}" data-id="${e.id}" style="--c:${e.color}">
+        <button class="dot" data-act="vis" aria-label="${e.visible ? 'Ocultar' : 'Mostrar'} curva de ${esc(e.name)}" aria-pressed="${e.visible}" title="${e.visible ? 'Ocultar' : 'Mostrar'} no gráfico"></button>
+        <div class="meta"><b>${esc(e.name || 'Sem nome')}</b><small>${meta}</small></div></li>`;
+    }).join('');
+  }
+  $('#elist').addEventListener('click', (ev) => {
+    const li = ev.target.closest('.en'); if (!li) return;
+    const id = li.dataset.id;
+    if (ev.target.closest('[data-act=vis]')) {
+      const e = state.ensaios.find(x => x.id === id); e.visible = !e.visible;
+      refresh(); save(); return;
+    }
+    if (state.sel !== id) { state.sel = id; renderList(); renderEditor(); save(); }
+  });
+
+  /* ------------------------------------------------------------ editor */
+  const MODE_HINT = {
+    passa: 'Digite o % de material que passa em cada peneira (100 na maior, decrescendo).',
+    retida: 'Digite o % retido acumulado (0 na maior peneira, crescendo). O app converte para % passante.',
+    massa: 'Digite a massa retida (g) em cada peneira e no fundo. O % passante é calculado.',
+  };
+  function rowHtml(r, i, mode) {
+    const d = C.toNum(r.d), sv = d > 0 ? C.sieveFor(d) : null;
+    const tag = sv ? `<span class="tag">${esc(sv.label)}</span>` : (d > 0 && d < 0.075 ? '<span class="tag sed">sedim.</span>' : '');
+    return `<div class="r" data-i="${i}">
+      <div class="cell"><input class="in d ${tag ? 'hastag' : ''}" inputmode="decimal" autocomplete="off" aria-label="Diâmetro ${i + 1} (mm)" placeholder="mm" value="${esc(r.d)}">${tag}</div>
+      <input class="in v" inputmode="decimal" autocomplete="off" aria-label="${mode === 'massa' ? 'Massa retida (g)' : mode === 'retida' ? '% retida acumulada' : '% passante'} ${i + 1}" placeholder="${mode === 'massa' ? 'g' : '%'}" value="${esc(r.v)}">
+      ${mode === 'massa' ? '<div class="calc" data-calc>—</div>' : ''}
+      <button class="xbtn" data-act="del" aria-label="Remover linha ${i + 1}" title="Remover linha">×</button></div>`;
+  }
+  function renderEditor() {
+    const e = cur();
+    if (!e) { $('#editor').innerHTML = '<div class="empty">Crie um ensaio para começar.</div>'; return; }
+    const modeLabel = { passa: '% Passante', retida: '% Retida acum.', massa: 'Massa retida (g)' };
+    $('#editor').innerHTML = `
+      <div class="card-h"><h2 id="h-ed">Dados do ensaio</h2>
+        <button class="btn sm icon" data-act="dup" title="Duplicar ensaio" aria-label="Duplicar ensaio"><svg class="i"><use href="#i-copy"/></svg></button>
+        <button class="btn sm icon danger" data-act="rm" title="Excluir ensaio" aria-label="Excluir ensaio"><svg class="i"><use href="#i-trash"/></svg></button></div>
+      <label class="field"><span>Nome</span><input class="in" id="inName" value="${esc(e.name)}" maxlength="60" autocomplete="off"></label>
+      <div class="swatches" role="group" aria-label="Cor da curva">${PALETTE.map(c => `<button style="--c:${c}" data-color="${c}" aria-pressed="${c.toLowerCase() === e.color.toLowerCase()}" aria-label="Cor ${c}"></button>`).join('')}</div>
+      <div class="seg" role="group" aria-label="Tipo de dado">${Object.keys(modeLabel).map(m => `<button data-mode="${m}" aria-pressed="${e.mode === m}">${modeLabel[m]}</button>`).join('')}</div>
+      <p class="hint">${MODE_HINT[e.mode]}</p>
+      <div class="rows ${e.mode === 'massa' ? 'massa' : ''}" id="rows">
+        <div class="r rh"><span>Ø (mm)</span><span>${e.mode === 'massa' ? 'Massa (g)' : e.mode === 'retida' ? '% retida' : '% passa'}</span>${e.mode === 'massa' ? '<span style="text-align:right">% passa</span>' : ''}<span></span></div>
+        <div class="rows-scroll" id="rowsScroll">${e.rows.map((r, i) => rowHtml(r, i, e.mode)).join('')}</div>
+      </div>
+      ${e.mode === 'massa' ? `<label class="field" style="margin-top:6px"><span>Massa retida no fundo / prato (g)</span><input class="in" id="inFundo" inputmode="decimal" placeholder="g" value="${esc(e.fundo || '')}"></label>` : ''}
+      <div class="btnrow" style="margin-top:6px">
+        <button class="btn sm" data-act="addrow"><svg class="i"><use href="#i-plus"/></svg>Linha</button>
+        <button class="btn sm" data-act="sieves" title="Preencher a coluna de diâmetros com as peneiras padrão">Peneiras padrão</button>
+        <button class="btn sm" data-act="sed" title="Adicionar diâmetros típicos da sedimentação">+ Sedimentação</button>
+        <button class="btn sm" data-act="clearv">Limpar valores</button>
+      </div>
+      <ul class="warns" id="warns"></ul>`;
+    updateDerivedEditor();
+  }
+
+  function updateDerivedEditor() {
+    const e = cur(); if (!e) return;
+    const a = A.get(e.id);
+    const w = $('#warns');
+    if (w) w.innerHTML = (a ? a.warnings : []).map(t => `<li>${esc(t)}</li>`).join('');
+    if (e.mode === 'massa' && a) {
+      const byRow = new Map(a.pts.map(p => [p.row, p.p]));
+      $$('#rows .r[data-i]').forEach(r => {
+        const c = $('[data-calc]', r); if (!c) return;
+        const p = byRow.get(+r.dataset.i);
+        c.textContent = p == null ? '—' : C.fmtNum(p, 3);
+      });
+    }
+  }
+
+  function updateRowTag(rowEl, r) {
+    const cell = $('.cell', rowEl), inp = $('.d', cell);
+    const old = $('.tag', cell); if (old) old.remove();
+    const d = C.toNum(r.d), sv = d > 0 ? C.sieveFor(d) : null;
+    let html = '';
+    if (sv) html = `<span class="tag">${esc(sv.label)}</span>`;
+    else if (d > 0 && d < 0.075) html = '<span class="tag sed">sedim.</span>';
+    if (html) cell.insertAdjacentHTML('beforeend', html);
+    inp.classList.toggle('hastag', !!html);
+  }
+
+  const ed = $('#editor');
+  ed.addEventListener('input', (ev) => {
+    const e = cur(), t = ev.target;
+    if (t.id === 'inName') { e.name = t.value; renderList(); refresh(true); save(); return; }
+    if (t.id === 'inFundo') { e.fundo = t.value; refresh(); save(); return; }
+    const row = t.closest('.r[data-i]'); if (!row) return;
+    const r = e.rows[+row.dataset.i];
+    if (t.classList.contains('d')) { r.d = t.value; updateRowTag(row, r); } else if (t.classList.contains('v')) r.v = t.value;
+    const bad = t.value.trim() !== '' && !isFinite(C.toNum(t.value));
+    t.classList.toggle('warn', bad);
+    refresh(); save();
+  });
+  ed.addEventListener('keydown', (ev) => {
+    const t = ev.target;
+    if (ev.key !== 'Enter' || !t.classList.contains('in')) return;
+    const row = t.closest('.r[data-i]'); if (!row) return;
+    ev.preventDefault();
+    const cls = t.classList.contains('d') ? '.d' : '.v';
+    let next = row.nextElementSibling;
+    if (!next) { addRow(); next = $('#rowsScroll').lastElementChild; }
+    if (next) $(cls, next).focus();
+  });
+  ed.addEventListener('paste', (ev) => {
+    const t = ev.target; if (!t.classList || !t.classList.contains('in') || !t.closest('.r[data-i]')) return;
+    const txt = (ev.clipboardData || window.clipboardData).getData('text');
+    if (!/[\n\t]/.test(txt.trim())) return; // colagem simples
+    const res = IO.rowsToEnsaios(IO.parseText(txt), cur().name);
+    if (!res.length) return;
+    ev.preventDefault();
+    snapshot();
+    applyToCurrent(res[0]);
+    toast('Dados colados — ' + res[0].rows.length + ' pontos.', { undo: true });
+  });
+  ed.addEventListener('click', (ev) => {
+    const e = cur();
+    const b = ev.target.closest('button'); if (!b) return;
+    if (b.dataset.color) { e.color = b.dataset.color; renderList(); renderEditor(); refresh(true); save(); return; }
+    if (b.dataset.mode) { setMode(e, b.dataset.mode); return; }
+    switch (b.dataset.act) {
+      case 'del': {
+        const i = +b.closest('.r').dataset.i; e.rows.splice(i, 1); renderEditor(); refresh(); save(); break;
+      }
+      case 'addrow': addRow(); $('#rowsScroll').lastElementChild.querySelector('.d').focus(); break;
+      case 'sieves': {
+        const have = new Set(e.rows.map(r => C.toNum(r.d)));
+        const add = C.STD_ROWS().filter(r => !have.has(C.toNum(r.d)));
+        e.rows = [...e.rows.filter(r => r.d !== '' || r.v !== ''), ...add];
+        e.rows.sort((a, b2) => (C.toNum(b2.d) || 0) - (C.toNum(a.d) || 0));
+        renderEditor(); refresh(); save(); break;
+      }
+      case 'sed': {
+        const have = new Set(e.rows.map(r => C.toNum(r.d)));
+        const add = [0.05, 0.02, 0.01, 0.005, 0.002].filter(d => !have.has(d)).map(d => ({ d: String(d).replace('.', ','), v: '' }));
+        e.rows = [...e.rows, ...add];
+        e.rows.sort((a, b2) => (C.toNum(b2.d) || 0) - (C.toNum(a.d) || 0));
+        renderEditor(); refresh(); save(); break;
+      }
+      case 'clearv': snapshot(); e.rows.forEach(r => { r.v = ''; }); e.fundo = ''; renderEditor(); refresh(); save(); toast('Valores apagados.', { undo: true }); break;
+      case 'dup': {
+        const c = clone(e); c.id = uid(); c.name = e.name + ' (cópia)'; c.color = nextColor();
+        state.ensaios.splice(state.ensaios.indexOf(e) + 1, 0, c); state.sel = c.id; renderAll(); save(); break;
+      }
+      case 'rm': {
+        snapshot();
+        const i = state.ensaios.indexOf(e); state.ensaios.splice(i, 1);
+        state.sel = (state.ensaios[Math.min(i, state.ensaios.length - 1)] || {}).id;
+        renderAll(); save(); toast(`“${e.name}” excluído.`, { undo: true }); break;
+      }
+    }
+  });
+
+  function addRow() { const e = cur(); e.rows.push({ d: '', v: '' }); const rs = $('#rowsScroll'); rs.insertAdjacentHTML('beforeend', rowHtml(e.rows[e.rows.length - 1], e.rows.length - 1, e.mode)); rs.scrollTop = rs.scrollHeight; save(); }
+
+  function setMode(e, m) {
+    if (m === e.mode) return;
+    snapshot();
+    const from = e.mode;
+    if ((from === 'passa' && m === 'retida') || (from === 'retida' && m === 'passa')) {
+      e.rows.forEach(r => { const v = C.toNum(r.v); if (isFinite(v)) r.v = String(Number((100 - v).toPrecision(10))).replace('.', ','); });
+      e.mode = m; toast('Valores convertidos (100 − valor).', { undo: true });
+    } else {
+      e.rows.forEach(r => { r.v = ''; }); e.fundo = ''; e.mode = m;
+      toast('Modo alterado — valores limpos.', { undo: true });
+    }
+    renderEditor(); refresh(); save();
+  }
+  function nextColor() { const used = new Set(state.ensaios.map(e => e.color.toLowerCase())); return PALETTE.find(c => !used.has(c)) || PALETTE[state.ensaios.length % PALETTE.length]; }
+
+  function applyToCurrent(src) {
+    const e = cur();
+    e.mode = src.mode; e.rows = clone(src.rows); e.fundo = '';
+    renderEditor(); renderList(); refresh(); save();
+  }
+  function addEnsaios(list) {
+    let first = null;
+    for (const s of list) {
+      const e = { id: uid(), name: s.name || `Ensaio ${state.ensaios.length + 1}`, color: nextColor(), mode: s.mode || 'passa', rows: clone(s.rows), fundo: '', visible: true };
+      state.ensaios.push(e); first = first || e;
+    }
+    if (first) state.sel = first.id;
+    renderAll(); save();
+  }
+
+  $('#btnNew').onclick = () => {
+    const e = { id: uid(), name: `Ensaio ${state.ensaios.length + 1}`, color: nextColor(), mode: 'passa', rows: C.STD_ROWS(), fundo: '', visible: true };
+    state.ensaios.push(e); state.sel = e.id; renderAll(); save();
+    const first = $('#rowsScroll .v'); if (first) first.focus();
+  };
+  $('#btnExamples').onclick = () => {
+    const have = new Set(state.ensaios.map(e => e.id));
+    const add = C.EXAMPLES.filter(x => !have.has(x.id));
+    if (!add.length) { toast('Os 3 exemplos já estão na lista.'); return; }
+    add.forEach(x => state.ensaios.push({ id: x.id, name: x.name, color: x.color, mode: x.mode, rows: clone(x.rows), fundo: '', visible: true }));
+    state.sel = add[0].id; renderAll(); save(); toast(`${add.length} exemplo(s) adicionado(s).`);
+  };
+
+  /* ------------------------------------------------------------ importação */
+  $('#btnImport').onclick = () => $('#fileIn').click();
+  $('#fileIn').onchange = async (ev) => { const f = ev.target.files[0]; ev.target.value = ''; if (f) await importFile(f); };
+  async function importFile(f) {
+    try {
+      const res = await IO.importFile(f);
+      if (!res.length) throw new Error('Não encontrei dados. Use diâmetro (mm) na 1ª coluna e % passante, % retida ou massa nas seguintes.');
+      addEnsaios(res);
+      toast(`${res.length} ensaio(s) importado(s) de ${f.name}.`);
+    } catch (e) { toast(e.message || 'Falha ao importar', { err: true }); }
+  }
+  ['dragenter', 'dragover'].forEach(n => document.addEventListener(n, (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { e.preventDefault(); document.body.classList.add('drop'); } }));
+  ['dragleave', 'drop'].forEach(n => document.addEventListener(n, (e) => { if (n === 'dragleave' && e.relatedTarget) return; document.body.classList.remove('drop'); }));
+  document.addEventListener('drop', (e) => { if (e.dataTransfer && e.dataTransfer.files.length) { e.preventDefault(); setTab('app'); importFile(e.dataTransfer.files[0]); } });
+
+  const dlg = $('#dlgPaste');
+  $('#btnPaste').onclick = () => { $('#pasteMsg').textContent = ''; $('#pasteText').value = ''; dlg.showModal ? dlg.showModal() : dlg.setAttribute('open', ''); setTimeout(() => $('#pasteText').focus(), 30); };
+  $('#pasteCancel').onclick = () => dlg.close();
+  function parsePasted() {
+    const res = IO.rowsToEnsaios(IO.parseText($('#pasteText').value), 'Ensaio colado');
+    if (!res.length) { $('#pasteMsg').textContent = 'Não encontrei dados numéricos. Use diâmetro na 1ª coluna e os valores nas seguintes.'; return null; }
+    return res;
+  }
+  $('#pasteNew').onclick = () => { const r = parsePasted(); if (!r) return; r.forEach((x, i) => { if (/^Ensaio colado/.test(x.name)) x.name = `Ensaio ${state.ensaios.length + 1 + i}`; }); addEnsaios(r); dlg.close(); toast(`${r.length} ensaio(s) criado(s).`); };
+  $('#pasteReplace').onclick = () => { const r = parsePasted(); if (!r) return; snapshot(); applyToCurrent(r[0]); dlg.close(); toast('Dados substituídos.', { undo: true }); };
+
+  /* ------------------------------------------------------------ gráfico */
+  const chartEl = $('#chart'), wrapEl = $('#chartWrap'), card = $('#chartCard');
+  const hover = CH.attachHover(wrapEl, $('#gtip'));
+  let fs = false, lastKey = '';
+
+  function chartDims() {
+    const width = Math.max(300, Math.floor(wrapEl.clientWidth || card.clientWidth - 28));
+    const narrow = width < 560;
+    let plotH;
+    if (fs) plotH = Math.max(220, Math.floor(wrapEl.clientHeight - CH.chrome(width, state.show)));
+    else plotH = narrow ? 330 : Math.round(Math.min(480, Math.max(360, width * 0.44)));
+    return { width, plotH };
+  }
+  function drawChart() {
+    const { width, plotH } = chartDims();
+    const m = CH.render({ width, height: 0, plotH, series: visibleSeries(), show: state.show, system: state.system });
+    chartEl.innerHTML = m.svg;
+    hover.setModel(m);
+    lastKey = width + '|' + plotH;
+    // legenda
+    $('#legend').innerHTML = m.series.map(s => `<span style="--c:${s.color}"><i></i>${esc(s.name)}</span>`).join('');
+  }
+  let rafId = 0;
+  function redraw() { cancelAnimationFrame(rafId); rafId = requestAnimationFrame(drawChart); }
+  new ResizeObserver(() => { const { width, plotH } = chartDims(); if (width + '|' + plotH !== lastKey) redraw(); }).observe(wrapEl);
+
+  $$('.chip[data-show]').forEach(b => {
+    b.setAttribute('aria-pressed', !!state.show[b.dataset.show]);
+    b.onclick = () => { const k = b.dataset.show; state.show[k] = !state.show[k]; b.setAttribute('aria-pressed', state.show[k]); redraw(); save(); };
+  });
+  $('#sys').value = state.system;
+  $('#sys').onchange = (e) => { state.system = e.target.value; refresh(); renderFracTable(); save(); };
+
+  /* tela cheia */
+  async function setFs(on) {
+    fs = on;
+    card.classList.toggle('fs', on);
+    document.body.classList.toggle('noscroll', on);
+    const b = $('#btnFs');
+    b.querySelector('.lbl').textContent = on ? 'Fechar' : 'Ampliar';
+    b.querySelector('use').setAttribute('href', on ? '#i-x' : '#i-max');
+    if (on) { try { await card.requestFullscreen?.(); await screen.orientation?.lock?.('landscape'); } catch (e) { /* opcional */ } }
+    else { try { screen.orientation?.unlock?.(); if (document.fullscreenElement) await document.exitFullscreen(); } catch (e) { /* ok */ } }
+    redraw(); setTimeout(redraw, 120);
+  }
+  $('#btnFs').onclick = () => setFs(!fs);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && fs && !document.fullscreenElement) setFs(false); });
+  document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && fs) setFs(false); });
+  window.addEventListener('orientationchange', () => setTimeout(redraw, 250));
+
+  /* exportação */
+  function saveBlob(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+  async function chartPNG(scale = 2, w = 1200, plotH = 520) {
+    const m = CH.render({ width: w, height: 0, plotH, series: visibleSeries(), show: state.show, system: state.system, forExport: true });
+    const blob = await CH.toPNGBlob(m.svg, w, m.geom.H, scale);
+    return { blob, w, h: Math.round(m.geom.H) };
+  }
+  $('#btnPng').onclick = async () => {
+    if (!visibleSeries().some(s => s.a && s.a.valid)) { toast('Nada para exportar — preencha ao menos 2 pontos.', { err: true }); return; }
+    try { const { blob } = await chartPNG(2); saveBlob(blob, 'curva-granulometrica.png'); toast('PNG salvo.'); }
+    catch (e) { toast(e.message, { err: true }); }
+  };
+  $('#btnXls').onclick = async () => {
+    const items = state.ensaios.filter(e => e.visible).map(e => ({ name: e.name || 'Ensaio', ensaio: e, a: A.get(e.id) })).filter(it => it.a && it.a.valid);
+    if (!items.length) { toast('Nada para exportar — preencha ao menos 2 pontos.', { err: true }); return; }
+    let png = null;
+    try {
+      const r = await chartPNG(1.25, 1000, 440);
+      png = { png: new Uint8Array(await r.blob.arrayBuffer()), w: 1000, h: r.h };
+    } catch (e) { /* segue sem imagem */ }
+    const bytes = IO.buildReport(items, { system: state.system, png });
+    saveBlob(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'granulometria.xlsx');
+    toast('Planilha Excel salva.');
+  };
+
+  /* quadro das frações */
+  function renderFracTable(targetId = '#fracTable') {
+    const sys = C.SYSTEMS[state.system];
+    const fmtR = (lo, hi) => `${lo === 0 ? '< ' + C.fmtNum(hi) : hi === Infinity ? '> ' + C.fmtNum(lo) : C.fmtNum(lo) + ' – ' + C.fmtNum(hi)} mm`;
+    const rows = [...sys.groups].reverse().flatMap(g => [...g.subs].reverse().map(s => {
+      const b = sys.boundaries.find(x => x.d === s.lo);
+      return `<tr><td><span class="sw" style="--c:${C.GROUP_COLORS[g.key]}"></span>${g.subs.length > 1 ? g.label + ' ' + s.label.toLowerCase() : g.label}</td><td>${fmtR(s.lo, s.hi)}</td><td>${b ? esc(b.sieve) : '—'}</td><td>${s.hi <= 0.075 + 1e-9 ? '<span class="tt-chip sed">Sedimentação</span>' : '<span class="tt-chip">Peneiramento</span>'}</td></tr>`;
+    })).join('');
+    $(targetId).innerHTML = `<div class="tscroll" style="margin:0"><table class="tbl" style="min-width:560px"><tr><th>Fração (${esc(sys.name)})</th><th>Intervalo</th><th>Peneira no limite inferior</th><th>Ensaio</th></tr>${rows}</table></div>`;
+  }
+
+  /* ------------------------------------------------------------ resultados */
+  const M = (label, val, sub, cls = '') => `<div class="m ${cls}"><span>${label}</span><b>${val}</b><small>${sub || '&nbsp;'}</small></div>`;
+  function dCell(r) { return r && r.d != null ? C.fmtNum(r.d) : '—'; }
+  function dNote(key, r) {
+    if (r && r.d != null) return 'mm';
+    if (r && r.reason === 'abaixo') return `curva não chega a ${key.slice(1)}%`;
+    return 'indisponível';
+  }
+  function resultCard(e, a) {
+    const co = a.coef, g = a.grading, cuc = a.cuClass, ccc = a.ccClass;
+    const groups = a.comp.groups.filter(x => x.pct != null && x.pct > 0.05);
+    const segs = [...groups.map(x => ({ label: x.label + (x.partial ? ' (≥ ' + C.fmtNum(a.comp.dmin) + ' mm)' : ''), pct: x.pct, color: x.color })),
+      ...(a.comp.rest ? [{ label: `Finos < ${C.fmtNum(a.comp.rest.below)} mm (sem sedimentação)`, pct: a.comp.rest.pct, color: '#cfd8e3' }] : [])];
+    const order = ['Pedregulho', 'Areia', 'Silte', 'Argila'];
+    segs.sort((x, y) => { const ix = order.findIndex(o => x.label.startsWith(o)), iy = order.findIndex(o => y.label.startsWith(o)); return (ix < 0 ? 9 : ix) - (iy < 0 ? 9 : iy); });
+    const frTbl = a.comp.fractions.slice().reverse().map(f => `<tr><td>${f.group === 'pedregulho' || f.group === 'areia' ? (f.group === 'areia' ? 'Areia ' : 'Pedregulho ') + f.label.toLowerCase() : f.label}</td><td>${C.fmtNum(f.lo)}–${f.hi === Infinity ? '∞' : C.fmtNum(f.hi)} mm</td><td class="n">${f.pct == null ? 'n/d' : C.fmtPct(f.pct) + (f.partial ? '*' : '')}</td></tr>`).join('');
+    const h = a.hazen && a.hazen.applicable;
+    return `<article class="card res" style="--c:${e.color}">
+      <header><h3>${esc(e.name || 'Sem nome')}</h3><span class="pill ${g.tone}">${esc(g.label)}</span></header>
+      <div class="metrics">
+        ${M('D<sub>10</sub>', dCell(co.D10), dNote('D10', co.D10))}
+        ${M('D<sub>30</sub>', dCell(co.D30), dNote('D30', co.D30))}
+        ${M('D<sub>60</sub>', dCell(co.D60), dNote('D60', co.D60))}
+        ${M('D<sub>15</sub>', dCell(co.D15), dNote('D15', co.D15), 'half')}
+        ${M('D<sub>85</sub>', dCell(co.D85), dNote('D85', co.D85), 'half')}
+        <div class="m big"><span>C<sub>u</sub></span><b>${C.fmtNum(co.Cu)}</b><small>${co.Cu != null ? `D60/D10 = ${C.fmtNum(co.D60.d)}/${C.fmtNum(co.D10.d)} · <span class="tone-${cuc.tone}">${cuc.label}</span>` : 'precisa de D10 e D60'}</small></div>
+        <div class="m big"><span>C<sub>c</sub></span><b>${C.fmtNum(co.Cc)}</b><small>${co.Cc != null ? `D30²/(D10·D60) · <span class="tone-${ccc.tone}">${ccc.label}</span>` : 'precisa de D10, D30 e D60'}</small></div>
+      </div>
+      <p class="verdict">${esc(g.behavior)}${a.gap ? ` <b>Patamar entre ${C.fmtNum(a.gap.dLo)} e ${C.fmtNum(a.gap.dHi)} mm</b> (só ${C.fmtNum(a.gap.pHi - a.gap.pLo, 2)}% nessa faixa).` : ''}</p>
+      <div class="bar" role="img" aria-label="Composição granulométrica">${segs.map(s => `<i style="width:${s.pct}%;background:${s.color}" title="${esc(s.label)} ${C.fmtPct(s.pct)}"></i>`).join('')}</div>
+      <div class="barleg">${segs.map(s => `<span><i style="background:${s.color}"></i>${esc(s.label)} <b>${C.fmtPct(s.pct)}</b></span>`).join('')}</div>
+      <dl class="kv">
+        ${a.sucs ? `<dt>SUCS prelim.</dt><dd>${esc(a.sucs.symbol)}<small>${esc(a.sucs.name)}. ${esc(a.sucs.note)}</small></dd>` : ''}
+        ${h ? `<dt>k (Hazen)</dt><dd>≈ ${C.fmtSci(a.hazen.k)} cm/s<small>k = C·D10², C = 100 — estimativa para areias limpas</small></dd>` : ''}
+      </dl>
+      <details><summary>Frações (${esc(C.SYSTEMS[state.system].name)})</summary>
+        <table class="tbl" style="margin-top:6px"><tr><th>Fração</th><th>Intervalo</th><th class="n">%</th></tr>${frTbl}</table>
+        ${a.comp.approx ? '<p class="hint" style="margin-top:6px">Limite silte/areia de 0,06 mm aproximado pela peneira nº 200 (0,075 mm).</p>' : ''}
+        ${a.comp.fractions.some(f => f.partial) ? '<p class="hint">* só a parte medida; falta sedimentação para completar.</p>' : ''}
+      </details>
+    </article>`;
+  }
+  function renderResults() {
+    const list = state.ensaios.filter(e => e.visible);
+    const ok = list.filter(e => A.get(e.id).valid);
+    let html = '<h2>Resultados</h2>';
+    if (!ok.length) {
+      html += '<div class="card empty">Preencha ao menos 2 pontos (diâmetro e valor) de um ensaio visível para ver D10, D30, D60, Cu e Cc.</div>';
+    } else {
+      if (ok.length > 1) {
+        const f = (x) => x == null ? '—' : C.fmtNum(x);
+        html += `<div class="tscroll"><table class="tbl"><tr><th>Ensaio</th><th class="n">D10</th><th class="n">D30</th><th class="n">D60</th><th class="n">Cu</th><th class="n">Cc</th><th>Graduação</th><th>SUCS</th><th class="n">% ped.</th><th class="n">% areia</th><th class="n">% finos</th></tr>` +
+          ok.map(e => { const a = A.get(e.id), co = a.coef, sg = a.sg; return `<tr><td><span class="sw" style="--c:${e.color}"></span>${esc(e.name)}</td><td class="n">${f(co.D10.d)}</td><td class="n">${f(co.D30.d)}</td><td class="n">${f(co.D60.d)}</td><td class="n">${f(co.Cu)}</td><td class="n">${f(co.Cc)}</td><td><span class="tone-${a.grading.tone}"><b>${esc(a.grading.label)}</b></span></td><td>${a.sucs ? esc(a.sucs.symbol) : '—'}</td><td class="n">${sg ? C.fmtPct(sg.gravel, 0) : '—'}</td><td class="n">${sg ? C.fmtPct(sg.sand, 0) : '—'}</td><td class="n">${sg ? C.fmtPct(sg.fines, 0) : '—'}</td></tr>`; }).join('') +
+          '</table></div><p class="hint" style="margin-top:-6px">Diâmetros em mm. % pedregulho/areia/finos pelos limites SUCS (4,75 e 0,075 mm).</p>';
+      }
+      html += `<div class="res-grid">${ok.map(e => resultCard(e, A.get(e.id))).join('')}</div>`;
+    }
+    const pending = list.filter(e => !A.get(e.id).valid);
+    if (pending.length && ok.length) html += `<p class="hint" style="margin-top:10px">Sem dados suficientes: ${pending.map(e => esc(e.name)).join(', ')}.</p>`;
+    $('#results').innerHTML = html;
+  }
+
+  /* ------------------------------------------------------------ orquestração */
+  function refresh(skipList) {
+    analyzeAll();
+    if (!skipList) renderList();
+    updateDerivedEditor();
+    drawChart();
+    renderResults();
+  }
+  function renderAll() { analyzeAll(); renderList(); renderEditor(); drawChart(); renderResults(); renderFracTable(); }
+
+  /* ------------------------------------------------------------ abas */
+  // history.replaceState pode falhar em pré-visualizações isoladas (iframe/srcdoc)
+  const setHash = (h) => { try { history.replaceState(null, '', h); } catch (e) { /* ignora */ } };
+  function setTab(t) {
+    const isApp = t !== 'theory';
+    $('#view-app').hidden = !isApp; $('#view-theory').hidden = isApp;
+    $('#tab-app').setAttribute('aria-selected', isApp); $('#tab-theory').setAttribute('aria-selected', !isApp);
+    if (isApp) { redraw(); if (location.hash === '#teoria' || location.hash.startsWith('#t-')) setHash(location.pathname + location.search); }
+    else { buildTheory(); if (!location.hash.startsWith('#t-')) setHash('#teoria'); }
+    window.scrollTo(0, 0);
+  }
+  $('#tab-app').onclick = () => setTab('app');
+  $('#tab-theory').onclick = () => setTab('theory');
+  window.addEventListener('hashchange', () => { if (location.hash === '#teoria' || location.hash.startsWith('#t-')) { setTab('theory'); const el = document.getElementById(location.hash.slice(1)); if (el) el.scrollIntoView(); } });
+
+  /* ------------------------------------------------------------ teoria */
+  let theoryBuilt = false;
+  function miniChart(svg, ex) {
+    const a = C.analyze(ex, 'sucs');
+    const W = 260, H = 130, l = 26, r = 8, t = 8, b = 20;
+    const X = (d) => l + (Math.log10(d) - (-3)) / 5 * (W - l - r), Y = (p) => H - b - p / 100 * (H - t - b);
+    let s = `<rect x="${l}" y="${t}" width="${W - l - r}" height="${H - t - b}" fill="#fff" stroke="#9db0c6"/>`;
+    for (let k = -3; k <= 2; k++) { s += `<line x1="${X(Math.pow(10, k))}" x2="${X(Math.pow(10, k))}" y1="${t}" y2="${H - b}" stroke="#dbe4ee"/><text x="${X(Math.pow(10, k))}" y="${H - 7}" font-size="9" fill="#6b7b91" text-anchor="middle">${C.fmtNum(Math.pow(10, k), 1)}</text>`; }
+    for (let p = 0; p <= 100; p += 25) { s += `<line x1="${l}" x2="${W - r}" y1="${Y(p)}" y2="${Y(p)}" stroke="#eaf0f6"/><text x="${l - 4}" y="${Y(p) + 3}" font-size="9" fill="#6b7b91" text-anchor="end">${p}</text>`; }
+    s += `<path d="${a.pts.map((q, i) => (i ? 'L' : 'M') + X(q.d).toFixed(1) + ',' + Y(q.p).toFixed(1)).join('')}" fill="none" stroke="${ex.color}" stroke-width="2.4" stroke-linejoin="round"/>`;
+    svg.innerHTML = s;
+  }
+  function stokes() {
+    const Gs = C.toNum($('#stG').value), T = C.toNum($('#stT').value), H = C.toNum($('#stH').value);
+    const tb = $('#stTable');
+    if (!(Gs > 1) || !isFinite(T) || !(H > 0)) { tb.innerHTML = '<tr><td>Informe valores válidos.</td></tr>'; return; }
+    // densidade da água (Tanaka et al., 2001) e viscosidade (poise) em função da temperatura
+    const rw = 0.99997495 * (1 - ((T - 3.983035) ** 2 * (T + 301.797)) / (522528.9 * (T + 69.34881)));
+    const eta = 0.01002 * Math.pow(10, (1.3272 * (20 - T) - 0.001053 * (T - 20) ** 2) / (T + 105));
+    const rows = [0.075, 0.05, 0.02, 0.01, 0.005, 0.002, 0.001].map(D => {
+      const Dcm = D / 10, v = (Gs - rw) * 981 * Dcm * Dcm / (18 * eta); // cm/s
+      const t = H / v; // s
+      const tt = t < 90 ? C.fmtNum(t, 3) + ' s' : t < 5400 ? C.fmtNum(t / 60, 3) + ' min' : C.fmtNum(t / 3600, 3) + ' h';
+      return `<tr><td>${C.fmtNum(D)} mm</td><td class="n">${C.fmtSci(v)} cm/s</td><td class="n"><b>${tt}</b></td></tr>`;
+    }).join('');
+    tb.innerHTML = `<tr><th>Diâmetro D</th><th class="n">Velocidade v</th><th class="n">Tempo para cair ${C.fmtNum(H)} cm</th></tr>${rows}`;
+    $('#stNote').innerHTML = `Água a ${C.fmtNum(T)} °C: ρ<sub>w</sub> ≈ ${C.fmtNum(rw, 4)} g/cm³ · μ ≈ ${C.fmtNum(eta * 100, 4)} mPa·s. Cálculo: v = (ρ<sub>s</sub> − ρ<sub>w</sub>)·g·D² / (18·μ), com g = 981 cm/s².`;
+  }
+  function buildTheory() {
+    if (theoryBuilt) return; theoryBuilt = true;
+    const half = Math.ceil(C.SIEVES.length / 2);
+    const li = (s) => `<tr><td>${esc(s.name)}</td></tr>`;
+    $('#sieveTable').innerHTML = `<div class="two"><div class="tscroll" style="margin:0"><table class="tbl">${C.SIEVES.slice(0, half).map(li).join('')}</table></div><div class="tscroll" style="margin:0"><table class="tbl">${C.SIEVES.slice(half).map(s => li(s).replace(esc(s.name), esc(s.name) + (s.d === 0.075 ? ' <span class="tt-chip">limite físico do peneiramento</span>' : ''))).join('')}</table></div></div>`;
+    const save0 = state.system;
+    let html = '';
+    for (const id of ['abnt', 'sucs']) {
+      state.system = id;
+      const holder = document.createElement('div'); holder.id = 'tmpFrac'; document.body.appendChild(holder);
+      renderFracTable('#tmpFrac'); html += `<h3>${C.SYSTEMS[id].name}</h3>` + holder.innerHTML; holder.remove();
+    }
+    state.system = save0;
+    $('#fracTables').innerHTML = html;
+    $$('svg[data-mini]').forEach(svg => miniChart(svg, C.EXAMPLES.find(e => e.id === svg.dataset.mini)));
+    ['#stG', '#stT', '#stH'].forEach(id => $(id).addEventListener('input', stokes)); stokes();
+    $('#btnLesson').onclick = () => {
+      const x = C.LESSON_EXAMPLE;
+      if (!state.ensaios.some(e => e.id === x.id)) state.ensaios.push({ id: x.id, name: x.name, color: x.color, mode: x.mode, rows: clone(x.rows), fundo: '', visible: true });
+      state.sel = x.id; state.show.d10 = state.show.d30 = state.show.d60 = true;
+      $$('.chip[data-show]').forEach(b => b.setAttribute('aria-pressed', !!state.show[b.dataset.show]));
+      setTab('app'); renderAll(); save(); toast('Exemplo da aula carregado — D10, D30 e D60 ativados.');
+    };
+    // índice ativo ao rolar
+    const links = $$('#tnav a'), secs = links.map(a => document.getElementById(a.getAttribute('href').slice(1)));
+    const io = new IntersectionObserver((en) => { en.forEach(x => { if (x.isIntersecting) links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + x.target.id)); }); }, { rootMargin: '-20% 0px -70% 0px' });
+    secs.forEach(s => s && io.observe(s));
+  }
+
+  /* ------------------------------------------------------------ PWA */
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
+  }
+
+  /* ------------------------------------------------------------ início */
+  renderAll();
+  if (location.hash === '#teoria' || location.hash.startsWith('#t-')) { setTab('theory'); const el = document.getElementById(location.hash.slice(1)); if (el) setTimeout(() => el.scrollIntoView(), 50); }
+  window.__granulo = { state: () => state, A: () => A, setTab };
+})();
+
+</script>
+</body>
+</html>

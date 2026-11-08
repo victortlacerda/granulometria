@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Granulometria — curva, Cu e Cc dos solos</title>
+<meta name="description" content="Plote a curva granulométrica, calcule D10, D30, D60, Cu e Cc e classifique solos. Funciona no navegador e no celular, sem instalar nada.">
+<meta name="theme-color" content="#f2f6fb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Granulometria">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232f80c9'/%3E%3Cpath d='M10 50C22 50 24 44 30 34S42 14 54 14' fill='none' stroke='%23fff' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+{{CSS}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-max" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-img" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></symbol>
+  <symbol id="i-xls" viewBox="0 0 24 24"><path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 10h18M3 15h18M9 3v18"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><path d="M9 9h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2zM5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 15V3m0 0 4 4m-4-4L8 7M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></symbol>
+  <symbol id="i-clip" viewBox="0 0 24 24"><path d="M9 4h6v3H9zM7 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+  <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6L4.5 19a2 2 0 0 0 1.8 3h11.4a2 2 0 0 0 1.8-3L14 9V3M7.5 15h9"/></symbol>
+</svg>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#2f80c9"/><path d="M10 50C22 50 24 44 30 34S42 14 54 14" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><circle cx="30" cy="34" r="4.5" fill="#fff"/></svg>
+      <div><b>Granulometria</b><small>Curva granulométrica · Cu · Cc · classificação</small></div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Seções">
+      <button role="tab" id="tab-app" aria-selected="true" aria-controls="view-app">Análise</button>
+      <button role="tab" id="tab-theory" aria-selected="false" aria-controls="view-theory">Teoria e aplicações</button>
+    </nav>
+  </div>
+</header>
+
+<!-- ============================ ANÁLISE ============================ -->
+<main class="wrap" id="view-app" role="tabpanel" aria-labelledby="tab-app">
+ <div class="app">
+  <div class="col">
+    <section class="card list-card" aria-labelledby="h-ens">
+      <div class="card-h">
+        <h2 id="h-ens">Ensaios</h2>
+        <button class="btn primary sm" id="btnNew"><svg class="i"><use href="#i-plus"/></svg>Novo</button>
+      </div>
+      <ul class="elist" id="elist"></ul>
+      <div class="btnrow">
+        <button class="btn sm" id="btnImport" title="Abrir arquivo .xlsx, .csv ou .txt"><svg class="i"><use href="#i-up"/></svg>Importar arquivo</button>
+        <button class="btn sm" id="btnPaste" title="Colar tabela copiada do Excel"><svg class="i"><use href="#i-clip"/></svg>Colar do Excel</button>
+        <button class="btn sm" id="btnExamples" title="Adicionar os 3 exemplos padrão"><svg class="i"><use href="#i-flask"/></svg>Exemplos</button>
+      </div>
+      <input type="file" id="fileIn" accept=".xlsx,.xlsm,.csv,.tsv,.txt,text/csv,text/plain" hidden>
+    </section>
+
+    <section class="card editor-card" id="editor" aria-labelledby="h-ed"></section>
+  </div>
+
+  <div class="col">
+    <section class="card chart-card" id="chartCard" aria-labelledby="h-ch">
+      <div class="chart-head">
+        <h2 id="h-ch">Curva granulométrica</h2>
+        <button class="btn sm" id="btnFs" title="Ampliar o gráfico na tela"><svg class="i"><use href="#i-max"/></svg><span class="lbl">Ampliar</span></button>
+        <button class="btn sm" id="btnPng" title="Baixar o gráfico em PNG"><svg class="i"><use href="#i-img"/></svg><span class="lbl">PNG</span></button>
+        <button class="btn sm primary" id="btnXls" title="Baixar planilha com dados, coeficientes e gráfico"><svg class="i"><use href="#i-xls"/></svg><span class="lbl">Excel</span></button>
+      </div>
+      <div class="toolbar" role="group" aria-label="Opções do gráfico">
+        <button class="chip" data-show="d10" aria-pressed="false"><span class="ck"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><span>D<sub>10</sub></span></button>
+        <button class="chip" data-show="d15" aria-pressed="false"><span class="ck"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><span>D<sub>15</sub></span></button>
+        <button class="chip" data-show="d30" aria-pressed="false"><span class="ck"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><span>D<sub>30</sub></span></button>
+        <button class="chip" data-show="d60" aria-pressed="false"><span class="ck"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><span>D<sub>60</sub></span></button>
+        <button class="chip" data-show="d85" aria-pressed="false"><span class="ck"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><span>D<sub>85</sub></span></button>
+        <span class="sep"></span>
+        <button class="chip" data-show="limits" aria-pressed="false" title="Linhas verticais nos limites entre pedregulho, areia, silte e argila"><span class="ck"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span>Limites das frações</button>
+        <button class="chip" data-show="sieves" aria-pressed="false" title="Linhas verticais nas peneiras"><span class="ck"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span>Peneiras</button>
+        <label class="sysel">Frações:
+          <select id="sys" aria-label="Sistema de classificação das frações">
+            <option value="abnt">ABNT NBR 6502</option>
+            <option value="sucs">SUCS (ASTM D2487)</option>
+          </select>
+        </label>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div class="fs-hint">Gire o celular para o modo paisagem para ver o gráfico maior.</div>
+      <div class="chart-wrap" id="chartWrap"><div id="chart"></div><div class="gtip" id="gtip" hidden></div></div>
+      <details id="fracDetails">
+        <summary>Frações do solo e peneiras limite</summary>
+        <div id="fracTable" style="margin-top:8px"></div>
+      </details>
+    </section>
+
+    <section class="results" id="results" aria-live="polite"></section>
+  </div>
+ </div>
+</main>
+
+<!-- ============================ TEORIA ============================ -->
+<main class="wrap" id="view-theory" role="tabpanel" aria-labelledby="tab-theory" hidden>
+{{THEORY}}
+</main>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<dialog id="dlgPaste">
+  <form method="dialog" id="pasteForm">
+    <h3>Colar dados do Excel ou CSV</h3>
+    <p class="hint">Copie as células no Excel (diâmetro na 1ª coluna e % passante, % retida ou massa retida nas seguintes) e cole abaixo. Várias colunas viram vários ensaios. O cabeçalho é opcional.</p>
+    <textarea id="pasteText" placeholder="Diâmetro (mm)&#9;% Passante&#10;4,75&#9;100&#10;2&#9;85&#10;0,6&#9;52&#10;0,075&#9;12" spellcheck="false"></textarea>
+    <div class="dlg-msg" id="pasteMsg"></div>
+    <div class="dlg-foot">
+      <button class="btn" type="button" id="pasteCancel">Cancelar</button>
+      <button class="btn" type="button" id="pasteReplace">Substituir ensaio selecionado</button>
+      <button class="btn primary" type="button" id="pasteNew">Criar novo ensaio</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+{{JS}}
+</script>
+</body>
+</html>

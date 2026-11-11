@@ -295,7 +295,7 @@ const GranuloIO = (() => {
       rows.push([
         { v: s.d, s: 0 },
         { v: '', s: 8 },
-        { f: `IF(OR(B${r}="",$G$2<=0),"",100*(1-SUM(B$2:B${r})/$G$2))`, s: 4 },
+        { f: `IF(OR(B${r}="",$G$6<=0),"",100*(1-SUM(B$2:B${r})/$G$6))`, s: 4 },
         { f: `IF(C${r}="","",100-C${r})`, s: 4 },
         s.label,
       ]);
@@ -306,8 +306,16 @@ const GranuloIO = (() => {
       rows.push([{ v: s.d, s: 6 }, { v: '—', s: 5 }, { v: '', s: 8 }, { f: `IF(C${r}="","",100-C${r})`, s: 4 }, { v: 'sedimentação (digite o % passante)', s: 5 }]);
     });
     // total das massas ao lado da tabela (G1 = rótulo, G2 = soma)
-    rows[0][6] = { v: 'Massa total (g)', s: 1 };
-    rows[1][6] = { f: `SUM(B2:B${last})+N(B${fundoRow})`, s: 3 };
+    // coluna G: G1/G2 massa inicial seca (opcional) · G4 soma das pesagens · G6 massa usada · G8 diferença
+    const put = (r, v) => { while (rows.length <= r) rows.push([]); rows[r][6] = v; };
+    put(0, { v: 'Massa inicial seca (g) — opcional', s: 1 });
+    put(1, { v: '', s: 8 });
+    put(2, { v: 'Soma retidas + fundo (g)', s: 1 });
+    put(3, { f: `SUM(B2:B${last})+N(B${fundoRow})`, s: 3 });
+    put(4, { v: 'Massa usada nos cálculos (g)', s: 1 });
+    put(5, { f: `IF(N(G2)>0,G2,G4)`, s: 3 });
+    put(6, { v: 'Diferença (%)', s: 1 });
+    put(7, { f: `IF(G6>0,100*(G6-G4)/G6,"")`, s: 3 });
 
     const help = [
       [{ v: 'Planilha modelo — análise granulométrica', s: 2 }],
@@ -315,6 +323,7 @@ const GranuloIO = (() => {
       [{ v: 'Como preencher', s: 7 }],
       ['1. Na aba "Ensaio 1", preencha as células amarelas.'],
       ['2. Peneiramento: digite a MASSA RETIDA (g) em cada peneira (coluna B) e no fundo/prato. O % passante (coluna C) é calculado sozinho.'],
+      ['   Se você pesou a amostra antes do ensaio (ex.: 200 g), digite em "Massa inicial seca" (G2): ela passa a ser a massa total e a planilha mostra a diferença para a soma das pesagens (perdas). Sem ela, o total é a soma das pesagens.'],
       ['   Se você já tem o % passante, digite-o direto na coluna C (pode sobrescrever a fórmula).'],
       ['3. Sedimentação (fração fina, < 0,075 mm): digite o % passante (coluna C) de cada diâmetro obtido no ensaio do densímetro. Deixe em branco o que não tiver.'],
       ['4. Pode apagar ou acrescentar linhas de diâmetro. Deixe em branco as peneiras que não usou.'],
@@ -324,7 +333,7 @@ const GranuloIO = (() => {
       [{ v: 'Séries de peneiras: 76 mm (3″) · 50 · 38 · 25 · 19 · 9,5 · 4,75 (nº 4) · 2,0 (nº 10) · 1,2 · 0,6 (nº 30) · 0,42 (nº 40) · 0,25 · 0,15 · 0,075 (nº 200).', s: 5 }],
     ];
     const sheets = [
-      { name: opts.name || 'Ensaio 1', rows, cols: [16, 16, 13, 19, 34, 3, 16], freeze: 1 },
+      { name: opts.name || 'Ensaio 1', rows, cols: [16, 16, 13, 19, 34, 3, 24], freeze: 1 },
       { name: 'Instruções', rows: help, cols: [120] },
     ];
     return buildXlsx(sheets);
@@ -407,34 +416,51 @@ const GranuloIO = (() => {
     const R = rows.filter(r => r && r.some(c => c != null && c !== ''));
     if (R.length < 2) return [];
     const isNum = (x) => x != null && isFinite(C.toNum(x));
-    // primeira linha cuja 1ª coluna é número
-    let start = R.findIndex(r => isNum(r[0]) && r.slice(1).some(isNum));
+
+    // coluna do diâmetro: a que o cabeçalho chama de malha/diâmetro/abertura/(mm); senão a 1ª
+    const DIAM = /malha|di[aâ]metro|abertura|\(mm\)|\bmm\b|\(µm\)|\(μm\)/i;
+    let dc = 0, hdrRow = -1;
+    for (let i = 0; i < Math.min(R.length, 8) && hdrRow < 0; i++) {
+      const j = R[i].findIndex(c => c != null && typeof c === 'string' && !isNum(c) && DIAM.test(c));
+      if (j >= 0 && R[i + 1]) { dc = j; hdrRow = i; }
+    }
+    let start = R.findIndex((r, i) => i > hdrRow && isNum(r[dc]) && r.some((c, j) => j !== dc && isNum(c)));
     if (start < 0) return [];
-    let header = null;
-    if (start > 0) header = R[start - 1];
+    let header = start > 0 ? R[start - 1] : null;
+    if (header && header.some(isNum) && !header.some(c => typeof c === 'string' && !isNum(c))) header = null; // linha anterior é dado, não cabeçalho
     const data = [];
-    for (let i = start; i < R.length; i++) if (isNum(R[i][0])) data.push(R[i]);
+    for (let i = start; i < R.length; i++) if (isNum(R[i][dc])) data.push(R[i]);
     const ncol = Math.max(...data.map(r => r.length));
 
     let dScale = 1;
-    if (header && header[0] && /µm|μm|micr[oô]n|\(um\)/i.test(String(header[0]))) dScale = 0.001;
+    if (header && header[dc] && /µm|μm|micr[oô]n|\(um\)/i.test(String(header[dc]))) dScale = 0.001;
 
     let series = [];
-    for (let j = 1; j < ncol; j++) {
+    for (let j = 0; j < ncol; j++) {
+      if (j === dc) continue;
+      const h = header && header[j] != null ? String(header[j]).trim() : '';
+      if (/^(peneira|n[º°o]\.?|sieve|abertura)/i.test(h) && !/passa|retid|massa/i.test(h)) continue; // nome/nº da peneira
+      if (j < dc && !header) continue;
       const vals = data.filter(r => isNum(r[j]));
       if (vals.length < 2) continue;
-      const h = header && header[j] != null ? String(header[j]).trim() : '';
       let mode = 'passa';
-      if (/massa|\(g\)|peso/i.test(h)) mode = 'massa';
+      if (/massa|\(g\)|peso/i.test(h)) mode = /pass/i.test(h) ? 'massap' : 'massa';
       else if (/retid/i.test(h) && !/passa/i.test(h)) mode = 'retida';
       series.push({ j, h, mode });
     }
-    // colunas derivadas (planilha do app / modelo): mantém a passante; sem ela, a massa
+    // colunas derivadas (planilha do app / modelo / exercício): mantém a % passante; sem ela, a massa
     const has = (m) => series.some(s => s.mode === m);
-    if (has('passa') && (has('retida') || has('massa'))) series = series.filter(s => s.mode === 'passa');
-    else if (has('massa') && has('retida')) series = series.filter(s => s.mode === 'massa');
+    if (has('passa') && (has('retida') || has('massa') || has('massap'))) series = series.filter(s => s.mode === 'passa');
+    else if ((has('massa') || has('massap')) && has('retida')) series = series.filter(s => s.mode !== 'retida');
 
-    // massa retida no fundo (linha "Fundo"/"Prato")
+    // massa inicial seca (célula abaixo do rótulo "Massa inicial") e massa retida no fundo (linha "Fundo"/"Prato")
+    let mtotal = '';
+    R.forEach((r, ri) => r.forEach((c, cj) => {
+      if (c != null && /massa inicial/i.test(String(c))) {
+        const below = (R[ri + 1] || [])[cj];
+        if (isNum(below) && C.toNum(below) > 0) mtotal = String(C.toNum(below)).replace('.', ',');
+      }
+    }));
     let fundo = '';
     for (const r of R) {
       if (r[0] != null && /fundo|prato/i.test(String(r[0]))) {
@@ -450,8 +476,8 @@ const GranuloIO = (() => {
       if (series.length === 1) name = (s.h && !generic.test(s.h)) ? s.h : sheetName;
       else name = (s.h && !generic.test(s.h)) ? s.h : `${sheetName} ${k + 1}`;
       return {
-        name, mode: s.mode, fundo: s.mode === 'massa' ? fundo : '',
-        rows: data.filter(r => isNum(r[s.j])).map(r => ({ d: fmt(C.toNum(r[0]) * dScale), v: fmt(C.toNum(r[s.j])) })),
+        name, mode: s.mode, fundo: s.mode === 'massa' ? fundo : '', mtotal: (s.mode === 'massa' || s.mode === 'massap') ? mtotal : '',
+        rows: data.filter(r => isNum(r[s.j])).map(r => ({ d: fmt(C.toNum(r[dc]) * dScale), v: fmt(C.toNum(r[s.j])) })),
       };
     });
   }

@@ -46,6 +46,38 @@ ok('modo massa retida: balanço de massas e % passante', () => {
   near(by[4.75], 90, 1e-9); near(by[2], 75, 1e-9); near(by[0.6], 45, 1e-9); near(by[0.075], 5, 1e-9);
 });
 
+ok('massa inicial seca (200 g) vira a massa total e acusa perdas', () => {
+  const base = { mode: 'massa', rows: [{ d: '4,75', v: '20' }, { d: '2', v: '40' }, { d: '0,6', v: '60' }, { d: '0,075', v: '60' }] };
+  // soma 180 g + fundo 18 g = 198 g de 200 g → 1% de perda
+  const r = C.buildCurve({ ...base, fundo: '18', mtotal: '200' });
+  assert.equal(r.total, 200);
+  const by = Object.fromEntries(r.pts.map(p => [p.d, p.p]));
+  near(by[4.75], 90, 1e-9); near(by[2], 70, 1e-9); near(by[0.6], 40, 1e-9); near(by[0.075], 10, 1e-9);
+  near(r.balance.diffPct, 1, 1e-9);
+  // diferença grande gera aviso
+  const r2 = C.buildCurve({ ...base, fundo: '5', mtotal: '200' });
+  assert.ok(r2.warnings.some(w => /perda/.test(w)));
+  // sem massa inicial: total = soma
+  const r3 = C.buildCurve({ ...base, fundo: '20' });
+  assert.equal(r3.total, 200); assert.equal(r3.balance.initial, false);
+});
+
+ok('exercício da aula: massa passante (g) de uma amostra de 200 g', () => {
+  const rows = [['9,5', '200'], ['4,8', '180'], ['2,35', '160'], ['1,19', '130'], ['0,6', '100'], ['0,3', '80'], ['0,15', '60'], ['0,074', '16']].map(([d, v]) => ({ d, v }));
+  const r = C.buildCurve({ mode: 'massap', mtotal: '200', rows });
+  assert.deepEqual(r.pts.map(p => p.p).reverse(), [100, 90, 80, 65, 50, 40, 30, 8]);
+  // sem massa inicial usa a maior massa e avisa
+  const r2 = C.buildCurve({ mode: 'massap', rows });
+  assert.ok(r2.warnings.some(w => /Sem massa inicial/.test(w))); near(r2.pts[0].p, 8, 1e-9);
+  // massas digitadas como % passante: acusa valores > 100 e sugere conversão
+  const r3 = C.buildCurve({ mode: 'passa', rows });
+  assert.equal(r3.overRange, 4); assert.equal(r3.maxVal, 200);
+  assert.ok(r3.warnings[0].includes('acima de 100%'));
+  // D60 ≈ 0,6 mm (50% em 0,6; 65% em 1,19 → 60% entre)
+  const a = C.analyze({ mode: 'massap', mtotal: '200', rows });
+  console.log('   exercício: D10', C.fmtNum(a.coef.D10.d), 'D30', C.fmtNum(a.coef.D30.d), 'D60', C.fmtNum(a.coef.D60.d), 'Cu', C.fmtNum(a.coef.Cu), 'Cc', C.fmtNum(a.coef.Cc));
+});
+
 ok('D10 indeterminado quando a curva não chega a 10% (sem sedimentação)', () => {
   const e = { mode: 'passa', rows: [{ d: '4,75', v: '100' }, { d: '0,6', v: '60' }, { d: '0,075', v: '25' }] };
   const r = C.analyze(e);
@@ -92,6 +124,13 @@ ok('avisos: valores decrescentes e diâmetros repetidos', () => {
   assert.ok(warnings.some(w => /repetido/.test(w)));
   const e2 = { mode: 'passa', rows: [{ d: '2', v: '50' }, { d: '1', v: '60' }, { d: '0,5', v: '40' }] };
   assert.ok(C.buildCurve(e2).warnings.some(w => /decresce/.test(w)));
+});
+
+ok('peneiras padrão incluem nº 8 e nº 50 e reconhecem a série ASTM do exercício', () => {
+  assert.equal(C.SIEVES.length, 16);
+  const lab = (d) => (C.sieveFor(d) || {}).label;
+  assert.equal(lab(2.35), 'nº 8'); assert.equal(lab(0.3), 'nº 50'); assert.equal(lab(1.19), 'nº 16'); assert.equal(lab(4.8), 'nº 4'); assert.equal(lab(0.074), 'nº 200');
+  const ds = C.SIEVES.map(s => s.d); assert.deepEqual(ds, [...ds].sort((a, b) => b - a));
 });
 
 ok('formatação pt-BR', () => {

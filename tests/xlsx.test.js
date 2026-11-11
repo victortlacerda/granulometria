@@ -51,5 +51,14 @@ fs.mkdirSync(OUT, { recursive: true });
   // CSV simples com ponto decimal e vírgula separadora
   const t6 = 'd,passa\n4.75,100\n2,80.5\n0.6,45\n';
   assert.equal(IO.rowsToEnsaios(IO.parseText(t6), 'c')[0].rows[1].v, '80,5');
+  // tabela do exercício: 1ª coluna = nome da peneira, malha na 2ª, massa e % passante
+  const t7 = 'Peneira\tMalha (mm)\tMassa (g)\t% Passante\n3/8"\t9,5\t200\t100%\n4\t4,8\t180\t90%\n8\t2,35\t160\t80%\n16\t1,19\t130\t65%\n30\t0,6\t100\t50%\n50\t0,3\t80\t40%\n100\t0,15\t60\t30%\n200\t0,074\t16\t8%\n';
+  const e7 = IO.rowsToEnsaios(IO.parseText(t7), 'Exercício');
+  assert.equal(e7.length, 1); assert.equal(e7[0].mode, 'passa');
+  assert.deepEqual(e7[0].rows.map(r => r.d), ['9,5', '4,8', '2,35', '1,19', '0,6', '0,3', '0,15', '0,074']);
+  assert.deepEqual(e7[0].rows.map(r => r.v), ['100', '90', '80', '65', '50', '40', '30', '8']);
+  // só massa passante (sem coluna de %)
+  const t8 = 'Peneira\tMalha (mm)\tMassa passante (g)\n4\t4,8\t180\n8\t2,35\t160\n16\t1,19\t130\n';
+  const e8 = IO.rowsToEnsaios(IO.parseText(t8), 'x'); assert.equal(e8[0].mode, 'massap'); assert.equal(e8[0].rows[0].d, '4,8');
   console.log('✓ importação de texto/CSV (tab, ;, vírgula, espaço, retida, massa)');
 })().catch(e => { console.error(e); process.exit(1); });

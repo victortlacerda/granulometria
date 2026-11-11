@@ -1,5 +1,5 @@
 // Service worker simples: guarda o app para funcionar offline depois do 1º acesso.
-const CACHE = 'granulometria-v1';
+const CACHE = 'granulometria-v2';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => {

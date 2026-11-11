@@ -94,7 +94,7 @@ select.in{padding-right:6px}
 .swatches{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
 .swatches button{width:24px;height:24px;border-radius:50%;border:2px solid #fff;background:var(--c);box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}
 .swatches button[aria-pressed=true]{box-shadow:0 0 0 2px var(--c)}
-.seg{display:flex;background:var(--mut-bg);border-radius:10px;padding:3px;gap:2px;margin-bottom:6px}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--mut-bg);border-radius:10px;padding:3px;gap:2px;margin-bottom:6px}
 .seg button{flex:1;border:0;background:none;padding:6px 4px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer}
 .seg button[aria-pressed=true]{background:#fff;color:var(--brand-d);box-shadow:0 1px 3px rgba(24,38,58,.12)}
 .hint{font-size:12.5px;color:var(--muted);margin:0 0 10px}
@@ -208,6 +208,10 @@ dialog h3{margin-bottom:6px}
 .tpl{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--brand-l);border:1px solid #bcd7ef;border-radius:12px;padding:10px 12px;margin:8px 0 12px}
 .tpl div{flex:1 1 220px;font-size:13.5px;color:var(--ink2)}
 .tpl b{display:block;color:var(--brand-d)}
+.two-f.one{grid-template-columns:1fr}
+.warns li.act{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:#fff4d6}
+.two-f{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.field em{font-style:normal;font-weight:500;color:var(--muted)}
 .drop{outline:3px dashed var(--brand);outline-offset:-8px}
 
 /* ---------- teoria ---------- */
@@ -273,6 +277,7 @@ body{overflow-x:hidden}
   <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 15V3m0 0 4 4m-4-4L8 7M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></symbol>
   <symbol id="i-clip" viewBox="0 0 24 24"><path d="M9 4h6v3H9zM7 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></symbol>
   <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6L4.5 19a2 2 0 0 0 1.8 3h11.4a2 2 0 0 0 1.8-3L14 9V3M7.5 15h9"/></symbol>
 </svg>
 
@@ -302,7 +307,8 @@ body{overflow-x:hidden}
       <div class="btnrow">
         <button class="btn sm" id="btnImport" title="Abrir arquivo .xlsx, .csv ou .txt"><svg class="i"><use href="#i-up"/></svg>Importar arquivo</button>
         <button class="btn sm" id="btnPaste" title="Colar tabela copiada do Excel"><svg class="i"><use href="#i-clip"/></svg>Colar do Excel</button>
-        <button class="btn sm" id="btnExamples" title="Adicionar os 3 exemplos padrão"><svg class="i"><use href="#i-flask"/></svg>Exemplos</button>
+        <button class="btn sm" id="btnExamples" title="Adicionar os 3 exemplos padrão (mantém seus ensaios)"><svg class="i"><use href="#i-flask"/></svg>Exemplos</button>
+        <button class="btn sm danger" id="btnReset" title="Apagar tudo e voltar ao estado inicial, com os 3 exemplos"><svg class="i"><use href="#i-reset"/></svg>Restaurar padrão</button>
       </div>
       <input type="file" id="fileIn" accept=".xlsx,.xlsm,.csv,.tsv,.txt,text/csv,text/plain" hidden>
     </section>
@@ -540,7 +546,7 @@ body{overflow-x:hidden}
   <h2>Como usar o app</h2>
   <ol class="steps">
     <li><b>Escolha ou crie um ensaio.</b> Há três exemplos prontos (bem graduado, uniforme e graduação aberta). Use <b>Novo</b> para começar do zero com as peneiras padrão.</li>
-    <li><b>Digite os dados.</b> Informe o diâmetro (mm) e o % passante, % retida acumulada ou a massa retida (g) de cada peneira. Use vírgula ou ponto. Para a fração fina, adicione os pontos da sedimentação (0,05; 0,02; 0,005; 0,002 mm…). A curva é traçada a cada digitação.</li>
+    <li><b>Digite os dados.</b> Informe o diâmetro (mm) e o % passante, o % retida acumulada, a massa retida (g) ou a massa que passa (g, acumulada) de cada peneira — nos modos de massa, informe também a massa inicial da amostra (ex.: 200 g). Use vírgula ou ponto. Para a fração fina, adicione os pontos da sedimentação (0,05; 0,02; 0,005; 0,002 mm…). A curva é traçada a cada digitação.</li>
     <li><b>Ou importe.</b> Em <i>Colar do Excel</i>, baixe a <b>planilha modelo</b> (peneiras padrão já preenchidas; você digita as massas retidas e os % da sedimentação nas células amarelas), preencha no Excel e depois importe o arquivo ou cole as colunas. Também aceita .csv e arrastar o arquivo para a tela. Várias colunas ou abas viram vários ensaios.</li>
     <li><b>Compare.</b> Cada ensaio tem sua cor; o olho na lista mostra ou oculta a curva. Passe o mouse (ou toque) sobre o gráfico para ver o % passante e o % retido de todas as curvas.</li>
     <li><b>Ative as guias.</b> Marque D<sub>10</sub>, D<sub>30</sub> e D<sub>60</sub> para ver as linhas horizontal e vertical até a curva; marque <i>Limites das frações</i> para ver as separações e as peneiras correspondentes.</li>
@@ -606,10 +612,12 @@ const GranuloCore = (() => {
     { d: 19,    label: '¾″',     name: '19,0 mm (¾″)',    prio: 2 },
     { d: 9.5,   label: '⅜″',     name: '9,5 mm (⅜″)',     prio: 1 },
     { d: 4.75,  label: 'nº 4',   name: '4,75 mm (nº 4)',  prio: 3 },
+    { d: 2.36,  label: 'nº 8',   name: '2,36 mm (nº 8)',  prio: 1 },
     { d: 2.0,   label: 'nº 10',  name: '2,0 mm (nº 10)',  prio: 3 },
     { d: 1.2,   label: 'nº 16',  name: '1,2 mm (nº 16)',  prio: 1 },
     { d: 0.6,   label: 'nº 30',  name: '0,6 mm (nº 30)',  prio: 2 },
     { d: 0.42,  label: 'nº 40',  name: '0,42 mm (nº 40)', prio: 3 },
+    { d: 0.3,   label: 'nº 50',  name: '0,30 mm (nº 50)', prio: 2 },
     { d: 0.25,  label: 'nº 60',  name: '0,25 mm (nº 60)', prio: 1 },
     { d: 0.15,  label: 'nº 100', name: '0,15 mm (nº 100)',prio: 2 },
     { d: 0.075, label: 'nº 200', name: '0,075 mm (nº 200)',prio: 4 },
@@ -717,14 +725,30 @@ const GranuloCore = (() => {
   }
 
   /* ---------- Curva a partir do ensaio ---------- */
-  // ensaio: { mode: 'passa' | 'retida' | 'massa', rows:[{d,v}], fundo }
+  // ensaio: { mode: 'passa' | 'retida' | 'massa' (retida por peneira) | 'massap' (massa que passa, acumulada),
+  //           rows:[{d,v}], fundo, mtotal (massa inicial seca; opcional) }
   function buildCurve(e) {
     const warnings = [];
     const rows = e.rows || [];
     let pts = [];
-    let total = null;
+    let total = null, balance = null, overRange = 0, maxVal = null;
 
-    if (e.mode === 'massa') {
+    if (e.mode === 'massap') {
+      // massa (g) que PASSA em cada peneira (acumulada) ÷ massa inicial
+      const items = [];
+      rows.forEach((r, i) => {
+        const d = toNum(r.d), m = toNum(r.v);
+        if (d > 0 && isFinite(m)) { if (m < 0) warnings.push(`Linha ${i + 1}: massa negativa ignorada.`); else items.push({ i, d, m }); }
+      });
+      const initN = toNum(e.mtotal);
+      const initial = isFinite(initN) && initN > 0 ? initN : 0;
+      const mx = items.reduce((s, r) => Math.max(s, r.m), 0);
+      total = initial || mx;
+      balance = { sum: null, total, initial: initial > 0, diffPct: null };
+      if (items.length && !initial) warnings.push(`Sem massa inicial: usando a maior massa digitada (${fmtNum(mx, 5)} g) como total — informe a massa inicial da amostra.`);
+      if (initial && mx > initial * (1 + 1e-9)) warnings.push(`Há massa passante (${fmtNum(mx, 5)} g) maior que a massa inicial (${fmtNum(initial, 5)} g) — valor ajustado a 100%.`);
+      if (total > 0) for (const it of items) pts.push({ d: it.d, p: clamp(100 * it.m / total, 0, 100), row: it.i, m: it.m });
+    } else if (e.mode === 'massa') {
       const items = [];
       rows.forEach((r, i) => {
         const d = toNum(r.d), m = toNum(r.v);
@@ -736,7 +760,17 @@ const GranuloCore = (() => {
       items.sort((a, b) => b.d - a.d);
       const fundoN = toNum(e.fundo);
       const fundo = isFinite(fundoN) && fundoN > 0 ? fundoN : 0;
-      total = items.reduce((s, r) => s + r.m, 0) + fundo;
+      const sumAll = items.reduce((s, r) => s + r.m, 0) + fundo;
+      const initN = toNum(e.mtotal);
+      const initial = isFinite(initN) && initN > 0 ? initN : 0;
+      // massa de referência: a massa inicial seca informada ou, se não houver, a soma das pesagens
+      total = initial || sumAll;
+      if (items.length) {
+        const diff = total > 0 ? 100 * (total - sumAll) / total : 0;
+        balance = { sum: sumAll, total, initial: initial > 0, diffPct: diff };
+        if (initial && diff < -1) warnings.push(`A soma das massas (${fmtNum(sumAll, 4)} g) excede a massa inicial (${fmtNum(initial, 4)} g) — confira as pesagens.`);
+        else if (initial && diff > 1) warnings.push(`Diferença de ${fmtNum(diff, 2)}% entre a massa inicial e a soma das massas retidas (perda de material?).`);
+      }
       if (total > 0) {
         let cum = 0;
         for (const it of items) {
@@ -744,15 +778,16 @@ const GranuloCore = (() => {
           pts.push({ d: it.d, p: clamp(100 * (total - cum) / total, 0, 100), row: it.i, m: it.m });
         }
       }
-      if (items.length && fundo === 0)
-        warnings.push('Informe a massa retida no fundo (prato) para fechar o balanço de massas.');
+      if (items.length && fundo === 0 && !initial)
+        warnings.push('Informe a massa retida no fundo (prato) ou a massa inicial seca para fechar o balanço de massas.');
     } else {
       rows.forEach((r, i) => {
         const d = toNum(r.d), v = toNum(r.v);
         if (!(d > 0) || !isFinite(v)) return;
         let p = e.mode === 'retida' ? 100 - v : v;
+        if (v > 100 + 1e-9) { overRange++; maxVal = Math.max(maxVal || 0, v); }
         if (p < -1e-9 || p > 100 + 1e-9) {
-          warnings.push(`Linha ${i + 1}: valor fora de 0–100% — ajustado.`);
+          if (!(v > 100 + 1e-9)) warnings.push(`Linha ${i + 1}: valor fora de 0–100% — ajustado.`);
           p = clamp(p, 0, 100);
         }
         pts.push({ d, p, row: i });
@@ -776,7 +811,8 @@ const GranuloCore = (() => {
     if (bad.length)
       warnings.push(`% passante decresce com o aumento do diâmetro em ${bad.map(d => fmtNum(d) + ' mm').slice(0, 3).join(', ')}${bad.length > 3 ? '…' : ''} — confira os dados.`);
 
-    return { pts, warnings, total };
+    if (overRange) warnings.unshift(`${overRange} valor(es) acima de 100% foram limitados a 100% — a curva está distorcida.`);
+    return { pts, warnings, total, balance, overRange, maxVal };
   }
 
   /* ---------- Interpolação (log-linear em D) ---------- */
@@ -936,9 +972,9 @@ const GranuloCore = (() => {
 
   /* ---------- Análise completa ---------- */
   function analyze(e, sysId = 'abnt') {
-    const { pts, warnings, total } = buildCurve(e);
+    const { pts, warnings, total, balance, overRange, maxVal } = buildCurve(e);
     const valid = pts.length >= 2;
-    const out = { pts, warnings, total, valid, system: sysId };
+    const out = { pts, warnings, total, balance, overRange, maxVal, valid, system: sysId };
     if (!valid) return out;
 
     const co = coefficients(pts);
@@ -1303,7 +1339,7 @@ const GranuloIO = (() => {
       rows.push([
         { v: s.d, s: 0 },
         { v: '', s: 8 },
-        { f: `IF(OR(B${r}="",$G$2<=0),"",100*(1-SUM(B$2:B${r})/$G$2))`, s: 4 },
+        { f: `IF(OR(B${r}="",$G$6<=0),"",100*(1-SUM(B$2:B${r})/$G$6))`, s: 4 },
         { f: `IF(C${r}="","",100-C${r})`, s: 4 },
         s.label,
       ]);
@@ -1314,8 +1350,16 @@ const GranuloIO = (() => {
       rows.push([{ v: s.d, s: 6 }, { v: '—', s: 5 }, { v: '', s: 8 }, { f: `IF(C${r}="","",100-C${r})`, s: 4 }, { v: 'sedimentação (digite o % passante)', s: 5 }]);
     });
     // total das massas ao lado da tabela (G1 = rótulo, G2 = soma)
-    rows[0][6] = { v: 'Massa total (g)', s: 1 };
-    rows[1][6] = { f: `SUM(B2:B${last})+N(B${fundoRow})`, s: 3 };
+    // coluna G: G1/G2 massa inicial seca (opcional) · G4 soma das pesagens · G6 massa usada · G8 diferença
+    const put = (r, v) => { while (rows.length <= r) rows.push([]); rows[r][6] = v; };
+    put(0, { v: 'Massa inicial seca (g) — opcional', s: 1 });
+    put(1, { v: '', s: 8 });
+    put(2, { v: 'Soma retidas + fundo (g)', s: 1 });
+    put(3, { f: `SUM(B2:B${last})+N(B${fundoRow})`, s: 3 });
+    put(4, { v: 'Massa usada nos cálculos (g)', s: 1 });
+    put(5, { f: `IF(N(G2)>0,G2,G4)`, s: 3 });
+    put(6, { v: 'Diferença (%)', s: 1 });
+    put(7, { f: `IF(G6>0,100*(G6-G4)/G6,"")`, s: 3 });
 
     const help = [
       [{ v: 'Planilha modelo — análise granulométrica', s: 2 }],
@@ -1323,6 +1367,7 @@ const GranuloIO = (() => {
       [{ v: 'Como preencher', s: 7 }],
       ['1. Na aba "Ensaio 1", preencha as células amarelas.'],
       ['2. Peneiramento: digite a MASSA RETIDA (g) em cada peneira (coluna B) e no fundo/prato. O % passante (coluna C) é calculado sozinho.'],
+      ['   Se você pesou a amostra antes do ensaio (ex.: 200 g), digite em "Massa inicial seca" (G2): ela passa a ser a massa total e a planilha mostra a diferença para a soma das pesagens (perdas). Sem ela, o total é a soma das pesagens.'],
       ['   Se você já tem o % passante, digite-o direto na coluna C (pode sobrescrever a fórmula).'],
       ['3. Sedimentação (fração fina, < 0,075 mm): digite o % passante (coluna C) de cada diâmetro obtido no ensaio do densímetro. Deixe em branco o que não tiver.'],
       ['4. Pode apagar ou acrescentar linhas de diâmetro. Deixe em branco as peneiras que não usou.'],
@@ -1332,7 +1377,7 @@ const GranuloIO = (() => {
       [{ v: 'Séries de peneiras: 76 mm (3″) · 50 · 38 · 25 · 19 · 9,5 · 4,75 (nº 4) · 2,0 (nº 10) · 1,2 · 0,6 (nº 30) · 0,42 (nº 40) · 0,25 · 0,15 · 0,075 (nº 200).', s: 5 }],
     ];
     const sheets = [
-      { name: opts.name || 'Ensaio 1', rows, cols: [16, 16, 13, 19, 34, 3, 16], freeze: 1 },
+      { name: opts.name || 'Ensaio 1', rows, cols: [16, 16, 13, 19, 34, 3, 24], freeze: 1 },
       { name: 'Instruções', rows: help, cols: [120] },
     ];
     return buildXlsx(sheets);
@@ -1415,34 +1460,51 @@ const GranuloIO = (() => {
     const R = rows.filter(r => r && r.some(c => c != null && c !== ''));
     if (R.length < 2) return [];
     const isNum = (x) => x != null && isFinite(C.toNum(x));
-    // primeira linha cuja 1ª coluna é número
-    let start = R.findIndex(r => isNum(r[0]) && r.slice(1).some(isNum));
+
+    // coluna do diâmetro: a que o cabeçalho chama de malha/diâmetro/abertura/(mm); senão a 1ª
+    const DIAM = /malha|di[aâ]metro|abertura|\(mm\)|\bmm\b|\(µm\)|\(μm\)/i;
+    let dc = 0, hdrRow = -1;
+    for (let i = 0; i < Math.min(R.length, 8) && hdrRow < 0; i++) {
+      const j = R[i].findIndex(c => c != null && typeof c === 'string' && !isNum(c) && DIAM.test(c));
+      if (j >= 0 && R[i + 1]) { dc = j; hdrRow = i; }
+    }
+    let start = R.findIndex((r, i) => i > hdrRow && isNum(r[dc]) && r.some((c, j) => j !== dc && isNum(c)));
     if (start < 0) return [];
-    let header = null;
-    if (start > 0) header = R[start - 1];
+    let header = start > 0 ? R[start - 1] : null;
+    if (header && header.some(isNum) && !header.some(c => typeof c === 'string' && !isNum(c))) header = null; // linha anterior é dado, não cabeçalho
     const data = [];
-    for (let i = start; i < R.length; i++) if (isNum(R[i][0])) data.push(R[i]);
+    for (let i = start; i < R.length; i++) if (isNum(R[i][dc])) data.push(R[i]);
     const ncol = Math.max(...data.map(r => r.length));
 
     let dScale = 1;
-    if (header && header[0] && /µm|μm|micr[oô]n|\(um\)/i.test(String(header[0]))) dScale = 0.001;
+    if (header && header[dc] && /µm|μm|micr[oô]n|\(um\)/i.test(String(header[dc]))) dScale = 0.001;
 
     let series = [];
-    for (let j = 1; j < ncol; j++) {
+    for (let j = 0; j < ncol; j++) {
+      if (j === dc) continue;
+      const h = header && header[j] != null ? String(header[j]).trim() : '';
+      if (/^(peneira|n[º°o]\.?|sieve|abertura)/i.test(h) && !/passa|retid|massa/i.test(h)) continue; // nome/nº da peneira
+      if (j < dc && !header) continue;
       const vals = data.filter(r => isNum(r[j]));
       if (vals.length < 2) continue;
-      const h = header && header[j] != null ? String(header[j]).trim() : '';
       let mode = 'passa';
-      if (/massa|\(g\)|peso/i.test(h)) mode = 'massa';
+      if (/massa|\(g\)|peso/i.test(h)) mode = /pass/i.test(h) ? 'massap' : 'massa';
       else if (/retid/i.test(h) && !/passa/i.test(h)) mode = 'retida';
       series.push({ j, h, mode });
     }
-    // colunas derivadas (planilha do app / modelo): mantém a passante; sem ela, a massa
+    // colunas derivadas (planilha do app / modelo / exercício): mantém a % passante; sem ela, a massa
     const has = (m) => series.some(s => s.mode === m);
-    if (has('passa') && (has('retida') || has('massa'))) series = series.filter(s => s.mode === 'passa');
-    else if (has('massa') && has('retida')) series = series.filter(s => s.mode === 'massa');
+    if (has('passa') && (has('retida') || has('massa') || has('massap'))) series = series.filter(s => s.mode === 'passa');
+    else if ((has('massa') || has('massap')) && has('retida')) series = series.filter(s => s.mode !== 'retida');
 
-    // massa retida no fundo (linha "Fundo"/"Prato")
+    // massa inicial seca (célula abaixo do rótulo "Massa inicial") e massa retida no fundo (linha "Fundo"/"Prato")
+    let mtotal = '';
+    R.forEach((r, ri) => r.forEach((c, cj) => {
+      if (c != null && /massa inicial/i.test(String(c))) {
+        const below = (R[ri + 1] || [])[cj];
+        if (isNum(below) && C.toNum(below) > 0) mtotal = String(C.toNum(below)).replace('.', ',');
+      }
+    }));
     let fundo = '';
     for (const r of R) {
       if (r[0] != null && /fundo|prato/i.test(String(r[0]))) {
@@ -1458,8 +1520,8 @@ const GranuloIO = (() => {
       if (series.length === 1) name = (s.h && !generic.test(s.h)) ? s.h : sheetName;
       else name = (s.h && !generic.test(s.h)) ? s.h : `${sheetName} ${k + 1}`;
       return {
-        name, mode: s.mode, fundo: s.mode === 'massa' ? fundo : '',
-        rows: data.filter(r => isNum(r[s.j])).map(r => ({ d: fmt(C.toNum(r[0]) * dScale), v: fmt(C.toNum(r[s.j])) })),
+        name, mode: s.mode, fundo: s.mode === 'massa' ? fundo : '', mtotal: (s.mode === 'massa' || s.mode === 'massap') ? mtotal : '',
+        rows: data.filter(r => isNum(r[s.j])).map(r => ({ d: fmt(C.toNum(r[dc]) * dScale), v: fmt(C.toNum(r[s.j])) })),
       };
     });
   }
@@ -1918,6 +1980,9 @@ const GranuloChart = (() => {
   let state = load() || fresh();
   let saveT = 0;
   const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignora */ } }, 250); };
+  const flush = () => { clearTimeout(saveT); try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignora */ } };
+  window.addEventListener('pagehide', flush);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
   const cur = () => state.ensaios.find(e => e.id === state.sel) || state.ensaios[0];
 
   /* ------------------------------------------------------------ toast + desfazer */
@@ -1928,13 +1993,17 @@ const GranuloChart = (() => {
     el.innerHTML = `<span>${esc(msg)}</span>`;
     if (opt.undo) {
       const b = document.createElement('button'); b.textContent = 'Desfazer';
-      b.onclick = () => { if (undoSnap) { state.ensaios = undoSnap.ensaios; state.sel = undoSnap.sel; undoSnap = null; renderAll(); save(); } el.remove(); };
+      b.onclick = () => { if (undoSnap) { Object.assign(state, undoSnap); undoSnap = null; syncControls(); renderAll(); save(); } el.remove(); };
       el.appendChild(b);
     }
     $('#toast').appendChild(el);
     setTimeout(() => el.remove(), opt.undo ? 7000 : 3800);
   }
-  const snapshot = () => { undoSnap = { ensaios: clone(state.ensaios), sel: state.sel }; };
+  const snapshot = () => { undoSnap = clone(state); };
+  function syncControls() {
+    $$('.chip[data-show]').forEach(b => b.setAttribute('aria-pressed', !!state.show[b.dataset.show]));
+    $('#sys').value = state.system;
+  }
 
   /* ------------------------------------------------------------ análise */
   let A = new Map();
@@ -1969,24 +2038,26 @@ const GranuloChart = (() => {
   });
 
   /* ------------------------------------------------------------ editor */
+  const isMass = (m) => m === 'massa' || m === 'massap';
   const MODE_HINT = {
     passa: 'Digite o % de material que passa em cada peneira (100 na maior, decrescendo).',
     retida: 'Digite o % retido acumulado (0 na maior peneira, crescendo). O app converte para % passante.',
     massa: 'Digite a massa retida (g) em cada peneira e no fundo. O % passante é calculado.',
+    massap: 'Digite a massa (g) que PASSA em cada peneira (acumulada) e a massa inicial da amostra. % passante = massa ÷ massa inicial.',
   };
   function rowHtml(r, i, mode) {
     const d = C.toNum(r.d), sv = d > 0 ? C.sieveFor(d) : null;
     const tag = sv ? `<span class="tag">${esc(sv.label)}</span>` : (d > 0 && d < 0.075 ? '<span class="tag sed">sedim.</span>' : '');
     return `<div class="r" data-i="${i}">
       <div class="cell"><input class="in d ${tag ? 'hastag' : ''}" inputmode="decimal" autocomplete="off" aria-label="Diâmetro ${i + 1} (mm)" placeholder="mm" value="${esc(r.d)}">${tag}</div>
-      <input class="in v" inputmode="decimal" autocomplete="off" aria-label="${mode === 'massa' ? 'Massa retida (g)' : mode === 'retida' ? '% retida acumulada' : '% passante'} ${i + 1}" placeholder="${mode === 'massa' ? 'g' : '%'}" value="${esc(r.v)}">
-      ${mode === 'massa' ? '<div class="calc" data-calc>—</div>' : ''}
+      <input class="in v" inputmode="decimal" autocomplete="off" aria-label="${mode === 'massa' ? 'Massa retida (g)' : mode === 'massap' ? 'Massa passante (g)' : mode === 'retida' ? '% retida acumulada' : '% passante'} ${i + 1}" placeholder="${isMass(mode) ? 'g' : '%'}" value="${esc(r.v)}">
+      ${isMass(mode) ? '<div class="calc" data-calc>—</div>' : ''}
       <button class="xbtn" data-act="del" aria-label="Remover linha ${i + 1}" title="Remover linha">×</button></div>`;
   }
   function renderEditor() {
     const e = cur();
     if (!e) { $('#editor').innerHTML = '<div class="empty">Crie um ensaio para começar.</div>'; return; }
-    const modeLabel = { passa: '% Passante', retida: '% Retida acum.', massa: 'Massa retida (g)' };
+    const modeLabel = { passa: '% Passante', retida: '% Retida acum.', massa: 'Massa retida (g)', massap: 'Massa passante (g)' };
     $('#editor').innerHTML = `
       <div class="card-h"><h2 id="h-ed">Dados do ensaio</h2>
         <button class="btn sm icon" data-act="dup" title="Duplicar ensaio" aria-label="Duplicar ensaio"><svg class="i"><use href="#i-copy"/></svg></button>
@@ -1995,11 +2066,14 @@ const GranuloChart = (() => {
       <div class="swatches" role="group" aria-label="Cor da curva">${PALETTE.map(c => `<button style="--c:${c}" data-color="${c}" aria-pressed="${c.toLowerCase() === e.color.toLowerCase()}" aria-label="Cor ${c}"></button>`).join('')}</div>
       <div class="seg" role="group" aria-label="Tipo de dado">${Object.keys(modeLabel).map(m => `<button data-mode="${m}" aria-pressed="${e.mode === m}">${modeLabel[m]}</button>`).join('')}</div>
       <p class="hint">${MODE_HINT[e.mode]}</p>
-      <div class="rows ${e.mode === 'massa' ? 'massa' : ''}" id="rows">
-        <div class="r rh"><span>Ø (mm)</span><span>${e.mode === 'massa' ? 'Massa (g)' : e.mode === 'retida' ? '% retida' : '% passa'}</span>${e.mode === 'massa' ? '<span style="text-align:right">% passa</span>' : ''}<span></span></div>
+      <div class="rows ${isMass(e.mode) ? 'massa' : ''}" id="rows">
+        <div class="r rh"><span>Ø (mm)</span><span>${e.mode === 'massa' ? 'Massa ret. (g)' : e.mode === 'massap' ? 'Massa pass. (g)' : e.mode === 'retida' ? '% retida' : '% passa'}</span>${isMass(e.mode) ? '<span style="text-align:right">% passa</span>' : ''}<span></span></div>
         <div class="rows-scroll" id="rowsScroll">${e.rows.map((r, i) => rowHtml(r, i, e.mode)).join('')}</div>
       </div>
-      ${e.mode === 'massa' ? `<label class="field" style="margin-top:6px"><span>Massa retida no fundo / prato (g)</span><input class="in" id="inFundo" inputmode="decimal" placeholder="g" value="${esc(e.fundo || '')}"></label>` : ''}
+      ${isMass(e.mode) ? `<div class="two-f ${e.mode === 'massap' ? 'one' : ''}">
+        <label class="field"><span>Massa inicial seca (g) ${e.mode === 'massap' ? '' : '<em>opcional</em>'}</span><input class="in" id="inMtotal" inputmode="decimal" placeholder="ex.: 200" value="${esc(e.mtotal || '')}"></label>
+        ${e.mode === 'massa' ? `<label class="field"><span>Retido no fundo / prato (g)</span><input class="in" id="inFundo" inputmode="decimal" placeholder="g" value="${esc(e.fundo || '')}"></label>` : ''}</div>
+        <p class="hint" id="massSum"></p>` : ''}
       <div class="btnrow" style="margin-top:6px">
         <button class="btn sm" data-act="addrow"><svg class="i"><use href="#i-plus"/></svg>Linha</button>
         <button class="btn sm" data-act="sieves" title="Preencher a coluna de diâmetros com as peneiras padrão">Peneiras padrão</button>
@@ -2014,8 +2088,24 @@ const GranuloChart = (() => {
     const e = cur(); if (!e) return;
     const a = A.get(e.id);
     const w = $('#warns');
-    if (w) w.innerHTML = (a ? a.warnings : []).map(t => `<li>${esc(t)}</li>`).join('');
-    if (e.mode === 'massa' && a) {
+    if (w) {
+      let html = (a ? a.warnings : []).map(t => `<li>${esc(t)}</li>`).join('');
+      if (a && a.overRange && (e.mode === 'passa' || e.mode === 'retida'))
+        html += `<li class="act">Valores acima de 100% — são massas (g)? <button class="btn sm" data-act="tomass">Tratar como massa passante (g)</button></li>`;
+      w.innerHTML = html;
+    }
+    const ms = $('#massSum');
+    if (ms) {
+      const b = a && a.balance;
+      if (e.mode === 'massap') {
+        ms.innerHTML = b && b.total > 0 ? `Massa inicial usada: <b>${C.fmtNum(b.total, 5)} g</b>${b.initial ? '' : ' (a maior massa digitada — informe a massa inicial)'}.` : 'Informe a massa inicial da amostra (ex.: 200 g).';
+      } else {
+        ms.innerHTML = b
+          ? `Soma das massas: <b>${C.fmtNum(b.sum, 5)} g</b>${b.initial ? ` · massa inicial: <b>${C.fmtNum(b.total, 5)} g</b> · diferença: <b>${C.fmtNum(b.diffPct, 2)}%</b>` : ' — usada como massa total (informe a massa inicial se houver perdas).'}`
+          : 'Informe a massa retida em cada peneira. Sem massa inicial, o total é a soma das pesagens (incluindo o fundo).';
+      }
+    }
+    if (isMass(e.mode) && a) {
       const byRow = new Map(a.pts.map(p => [p.row, p.p]));
       $$('#rows .r[data-i]').forEach(r => {
         const c = $('[data-calc]', r); if (!c) return;
@@ -2041,6 +2131,7 @@ const GranuloChart = (() => {
     const e = cur(), t = ev.target;
     if (t.id === 'inName') { e.name = t.value; renderList(); refresh(true); save(); return; }
     if (t.id === 'inFundo') { e.fundo = t.value; refresh(); save(); return; }
+    if (t.id === 'inMtotal') { e.mtotal = t.value; refresh(); save(); return; }
     const row = t.closest('.r[data-i]'); if (!row) return;
     const r = e.rows[+row.dataset.i];
     if (t.classList.contains('d')) { r.d = t.value; updateRowTag(row, r); } else if (t.classList.contains('v')) r.v = t.value;
@@ -2093,7 +2184,13 @@ const GranuloChart = (() => {
         e.rows.sort((a, b2) => (C.toNum(b2.d) || 0) - (C.toNum(a.d) || 0));
         renderEditor(); refresh(); save(); break;
       }
-      case 'clearv': snapshot(); e.rows.forEach(r => { r.v = ''; }); e.fundo = ''; renderEditor(); refresh(); save(); toast('Valores apagados.', { undo: true }); break;
+      case 'tomass': {
+        snapshot();
+        const a = A.get(e.id);
+        e.mode = 'massap'; e.mtotal = a && a.maxVal ? String(a.maxVal).replace('.', ',') : '';
+        renderEditor(); refresh(); save(); toast(`Convertido para massa passante — massa inicial ${e.mtotal} g (ajuste se for outra).`, { undo: true }); break;
+      }
+      case 'clearv': snapshot(); e.rows.forEach(r => { r.v = ''; }); e.fundo = ''; e.mtotal = ''; renderEditor(); refresh(); save(); toast('Valores apagados.', { undo: true }); break;
       case 'dup': {
         const c = clone(e); c.id = uid(); c.name = e.name + ' (cópia)'; c.color = nextColor();
         state.ensaios.splice(state.ensaios.indexOf(e) + 1, 0, c); state.sel = c.id; renderAll(); save(); break;
@@ -2117,7 +2214,7 @@ const GranuloChart = (() => {
       e.rows.forEach(r => { const v = C.toNum(r.v); if (isFinite(v)) r.v = String(Number((100 - v).toPrecision(10))).replace('.', ','); });
       e.mode = m; toast('Valores convertidos (100 − valor).', { undo: true });
     } else {
-      e.rows.forEach(r => { r.v = ''; }); e.fundo = ''; e.mode = m;
+      e.rows.forEach(r => { r.v = ''; }); e.fundo = ''; e.mtotal = ''; e.mode = m;
       toast('Modo alterado — valores limpos.', { undo: true });
     }
     renderEditor(); refresh(); save();
@@ -2126,13 +2223,13 @@ const GranuloChart = (() => {
 
   function applyToCurrent(src) {
     const e = cur();
-    e.mode = src.mode; e.rows = clone(src.rows); e.fundo = src.fundo || '';
+    e.mode = src.mode; e.rows = clone(src.rows); e.fundo = src.fundo || ''; e.mtotal = src.mtotal || '';
     renderEditor(); renderList(); refresh(); save();
   }
   function addEnsaios(list) {
     let first = null;
     for (const s of list) {
-      const e = { id: uid(), name: s.name || `Ensaio ${state.ensaios.length + 1}`, color: nextColor(), mode: s.mode || 'passa', rows: clone(s.rows), fundo: s.fundo || '', visible: true };
+      const e = { id: uid(), name: s.name || `Ensaio ${state.ensaios.length + 1}`, color: nextColor(), mode: s.mode || 'passa', rows: clone(s.rows), fundo: s.fundo || '', mtotal: s.mtotal || '', visible: true };
       state.ensaios.push(e); first = first || e;
     }
     if (first) state.sel = first.id;
@@ -2143,6 +2240,12 @@ const GranuloChart = (() => {
     const e = { id: uid(), name: `Ensaio ${state.ensaios.length + 1}`, color: nextColor(), mode: 'passa', rows: C.STD_ROWS(), fundo: '', visible: true };
     state.ensaios.push(e); state.sel = e.id; renderAll(); save();
     const first = $('#rowsScroll .v'); if (first) first.focus();
+  };
+  $('#btnReset').onclick = () => {
+    snapshot();
+    state = fresh();
+    syncControls(); renderAll(); save();
+    toast('Padrão restaurado — voltaram os 3 exemplos.', { undo: true });
   };
   $('#btnExamples').onclick = () => {
     const have = new Set(state.ensaios.map(e => e.id));

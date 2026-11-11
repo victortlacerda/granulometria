@@ -34,6 +34,9 @@
   let state = load() || fresh();
   let saveT = 0;
   const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignora */ } }, 250); };
+  const flush = () => { clearTimeout(saveT); try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignora */ } };
+  window.addEventListener('pagehide', flush);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
   const cur = () => state.ensaios.find(e => e.id === state.sel) || state.ensaios[0];
 
   /* ------------------------------------------------------------ toast + desfazer */
@@ -44,13 +47,17 @@
     el.innerHTML = `<span>${esc(msg)}</span>`;
     if (opt.undo) {
       const b = document.createElement('button'); b.textContent = 'Desfazer';
-      b.onclick = () => { if (undoSnap) { state.ensaios = undoSnap.ensaios; state.sel = undoSnap.sel; undoSnap = null; renderAll(); save(); } el.remove(); };
+      b.onclick = () => { if (undoSnap) { Object.assign(state, undoSnap); undoSnap = null; syncControls(); renderAll(); save(); } el.remove(); };
       el.appendChild(b);
     }
     $('#toast').appendChild(el);
     setTimeout(() => el.remove(), opt.undo ? 7000 : 3800);
   }
-  const snapshot = () => { undoSnap = { ensaios: clone(state.ensaios), sel: state.sel }; };
+  const snapshot = () => { undoSnap = clone(state); };
+  function syncControls() {
+    $$('.chip[data-show]').forEach(b => b.setAttribute('aria-pressed', !!state.show[b.dataset.show]));
+    $('#sys').value = state.system;
+  }
 
   /* ------------------------------------------------------------ análise */
   let A = new Map();
@@ -85,24 +92,26 @@
   });
 
   /* ------------------------------------------------------------ editor */
+  const isMass = (m) => m === 'massa' || m === 'massap';
   const MODE_HINT = {
     passa: 'Digite o % de material que passa em cada peneira (100 na maior, decrescendo).',
     retida: 'Digite o % retido acumulado (0 na maior peneira, crescendo). O app converte para % passante.',
     massa: 'Digite a massa retida (g) em cada peneira e no fundo. O % passante é calculado.',
+    massap: 'Digite a massa (g) que PASSA em cada peneira (acumulada) e a massa inicial da amostra. % passante = massa ÷ massa inicial.',
   };
   function rowHtml(r, i, mode) {
     const d = C.toNum(r.d), sv = d > 0 ? C.sieveFor(d) : null;
     const tag = sv ? `<span class="tag">${esc(sv.label)}</span>` : (d > 0 && d < 0.075 ? '<span class="tag sed">sedim.</span>' : '');
     return `<div class="r" data-i="${i}">
       <div class="cell"><input class="in d ${tag ? 'hastag' : ''}" inputmode="decimal" autocomplete="off" aria-label="Diâmetro ${i + 1} (mm)" placeholder="mm" value="${esc(r.d)}">${tag}</div>
-      <input class="in v" inputmode="decimal" autocomplete="off" aria-label="${mode === 'massa' ? 'Massa retida (g)' : mode === 'retida' ? '% retida acumulada' : '% passante'} ${i + 1}" placeholder="${mode === 'massa' ? 'g' : '%'}" value="${esc(r.v)}">
-      ${mode === 'massa' ? '<div class="calc" data-calc>—</div>' : ''}
+      <input class="in v" inputmode="decimal" autocomplete="off" aria-label="${mode === 'massa' ? 'Massa retida (g)' : mode === 'massap' ? 'Massa passante (g)' : mode === 'retida' ? '% retida acumulada' : '% passante'} ${i + 1}" placeholder="${isMass(mode) ? 'g' : '%'}" value="${esc(r.v)}">
+      ${isMass(mode) ? '<div class="calc" data-calc>—</div>' : ''}
       <button class="xbtn" data-act="del" aria-label="Remover linha ${i + 1}" title="Remover linha">×</button></div>`;
   }
   function renderEditor() {
     const e = cur();
     if (!e) { $('#editor').innerHTML = '<div class="empty">Crie um ensaio para começar.</div>'; return; }
-    const modeLabel = { passa: '% Passante', retida: '% Retida acum.', massa: 'Massa retida (g)' };
+    const modeLabel = { passa: '% Passante', retida: '% Retida acum.', massa: 'Massa retida (g)', massap: 'Massa passante (g)' };
     $('#editor').innerHTML = `
       <div class="card-h"><h2 id="h-ed">Dados do ensaio</h2>
         <button class="btn sm icon" data-act="dup" title="Duplicar ensaio" aria-label="Duplicar ensaio"><svg class="i"><use href="#i-copy"/></svg></button>
@@ -111,11 +120,14 @@
       <div class="swatches" role="group" aria-label="Cor da curva">${PALETTE.map(c => `<button style="--c:${c}" data-color="${c}" aria-pressed="${c.toLowerCase() === e.color.toLowerCase()}" aria-label="Cor ${c}"></button>`).join('')}</div>
       <div class="seg" role="group" aria-label="Tipo de dado">${Object.keys(modeLabel).map(m => `<button data-mode="${m}" aria-pressed="${e.mode === m}">${modeLabel[m]}</button>`).join('')}</div>
       <p class="hint">${MODE_HINT[e.mode]}</p>
-      <div class="rows ${e.mode === 'massa' ? 'massa' : ''}" id="rows">
-        <div class="r rh"><span>Ø (mm)</span><span>${e.mode === 'massa' ? 'Massa (g)' : e.mode === 'retida' ? '% retida' : '% passa'}</span>${e.mode === 'massa' ? '<span style="text-align:right">% passa</span>' : ''}<span></span></div>
+      <div class="rows ${isMass(e.mode) ? 'massa' : ''}" id="rows">
+        <div class="r rh"><span>Ø (mm)</span><span>${e.mode === 'massa' ? 'Massa ret. (g)' : e.mode === 'massap' ? 'Massa pass. (g)' : e.mode === 'retida' ? '% retida' : '% passa'}</span>${isMass(e.mode) ? '<span style="text-align:right">% passa</span>' : ''}<span></span></div>
         <div class="rows-scroll" id="rowsScroll">${e.rows.map((r, i) => rowHtml(r, i, e.mode)).join('')}</div>
       </div>
-      ${e.mode === 'massa' ? `<label class="field" style="margin-top:6px"><span>Massa retida no fundo / prato (g)</span><input class="in" id="inFundo" inputmode="decimal" placeholder="g" value="${esc(e.fundo || '')}"></label>` : ''}
+      ${isMass(e.mode) ? `<div class="two-f ${e.mode === 'massap' ? 'one' : ''}">
+        <label class="field"><span>Massa inicial seca (g) ${e.mode === 'massap' ? '' : '<em>opcional</em>'}</span><input class="in" id="inMtotal" inputmode="decimal" placeholder="ex.: 200" value="${esc(e.mtotal || '')}"></label>
+        ${e.mode === 'massa' ? `<label class="field"><span>Retido no fundo / prato (g)</span><input class="in" id="inFundo" inputmode="decimal" placeholder="g" value="${esc(e.fundo || '')}"></label>` : ''}</div>
+        <p class="hint" id="massSum"></p>` : ''}
       <div class="btnrow" style="margin-top:6px">
         <button class="btn sm" data-act="addrow"><svg class="i"><use href="#i-plus"/></svg>Linha</button>
         <button class="btn sm" data-act="sieves" title="Preencher a coluna de diâmetros com as peneiras padrão">Peneiras padrão</button>
@@ -130,8 +142,24 @@
     const e = cur(); if (!e) return;
     const a = A.get(e.id);
     const w = $('#warns');
-    if (w) w.innerHTML = (a ? a.warnings : []).map(t => `<li>${esc(t)}</li>`).join('');
-    if (e.mode === 'massa' && a) {
+    if (w) {
+      let html = (a ? a.warnings : []).map(t => `<li>${esc(t)}</li>`).join('');
+      if (a && a.overRange && (e.mode === 'passa' || e.mode === 'retida'))
+        html += `<li class="act">Valores acima de 100% — são massas (g)? <button class="btn sm" data-act="tomass">Tratar como massa passante (g)</button></li>`;
+      w.innerHTML = html;
+    }
+    const ms = $('#massSum');
+    if (ms) {
+      const b = a && a.balance;
+      if (e.mode === 'massap') {
+        ms.innerHTML = b && b.total > 0 ? `Massa inicial usada: <b>${C.fmtNum(b.total, 5)} g</b>${b.initial ? '' : ' (a maior massa digitada — informe a massa inicial)'}.` : 'Informe a massa inicial da amostra (ex.: 200 g).';
+      } else {
+        ms.innerHTML = b
+          ? `Soma das massas: <b>${C.fmtNum(b.sum, 5)} g</b>${b.initial ? ` · massa inicial: <b>${C.fmtNum(b.total, 5)} g</b> · diferença: <b>${C.fmtNum(b.diffPct, 2)}%</b>` : ' — usada como massa total (informe a massa inicial se houver perdas).'}`
+          : 'Informe a massa retida em cada peneira. Sem massa inicial, o total é a soma das pesagens (incluindo o fundo).';
+      }
+    }
+    if (isMass(e.mode) && a) {
       const byRow = new Map(a.pts.map(p => [p.row, p.p]));
       $$('#rows .r[data-i]').forEach(r => {
         const c = $('[data-calc]', r); if (!c) return;
@@ -157,6 +185,7 @@
     const e = cur(), t = ev.target;
     if (t.id === 'inName') { e.name = t.value; renderList(); refresh(true); save(); return; }
     if (t.id === 'inFundo') { e.fundo = t.value; refresh(); save(); return; }
+    if (t.id === 'inMtotal') { e.mtotal = t.value; refresh(); save(); return; }
     const row = t.closest('.r[data-i]'); if (!row) return;
     const r = e.rows[+row.dataset.i];
     if (t.classList.contains('d')) { r.d = t.value; updateRowTag(row, r); } else if (t.classList.contains('v')) r.v = t.value;
@@ -209,7 +238,13 @@
         e.rows.sort((a, b2) => (C.toNum(b2.d) || 0) - (C.toNum(a.d) || 0));
         renderEditor(); refresh(); save(); break;
       }
-      case 'clearv': snapshot(); e.rows.forEach(r => { r.v = ''; }); e.fundo = ''; renderEditor(); refresh(); save(); toast('Valores apagados.', { undo: true }); break;
+      case 'tomass': {
+        snapshot();
+        const a = A.get(e.id);
+        e.mode = 'massap'; e.mtotal = a && a.maxVal ? String(a.maxVal).replace('.', ',') : '';
+        renderEditor(); refresh(); save(); toast(`Convertido para massa passante — massa inicial ${e.mtotal} g (ajuste se for outra).`, { undo: true }); break;
+      }
+      case 'clearv': snapshot(); e.rows.forEach(r => { r.v = ''; }); e.fundo = ''; e.mtotal = ''; renderEditor(); refresh(); save(); toast('Valores apagados.', { undo: true }); break;
       case 'dup': {
         const c = clone(e); c.id = uid(); c.name = e.name + ' (cópia)'; c.color = nextColor();
         state.ensaios.splice(state.ensaios.indexOf(e) + 1, 0, c); state.sel = c.id; renderAll(); save(); break;
@@ -233,7 +268,7 @@
       e.rows.forEach(r => { const v = C.toNum(r.v); if (isFinite(v)) r.v = String(Number((100 - v).toPrecision(10))).replace('.', ','); });
       e.mode = m; toast('Valores convertidos (100 − valor).', { undo: true });
     } else {
-      e.rows.forEach(r => { r.v = ''; }); e.fundo = ''; e.mode = m;
+      e.rows.forEach(r => { r.v = ''; }); e.fundo = ''; e.mtotal = ''; e.mode = m;
       toast('Modo alterado — valores limpos.', { undo: true });
     }
     renderEditor(); refresh(); save();
@@ -242,13 +277,13 @@
 
   function applyToCurrent(src) {
     const e = cur();
-    e.mode = src.mode; e.rows = clone(src.rows); e.fundo = src.fundo || '';
+    e.mode = src.mode; e.rows = clone(src.rows); e.fundo = src.fundo || ''; e.mtotal = src.mtotal || '';
     renderEditor(); renderList(); refresh(); save();
   }
   function addEnsaios(list) {
     let first = null;
     for (const s of list) {
-      const e = { id: uid(), name: s.name || `Ensaio ${state.ensaios.length + 1}`, color: nextColor(), mode: s.mode || 'passa', rows: clone(s.rows), fundo: s.fundo || '', visible: true };
+      const e = { id: uid(), name: s.name || `Ensaio ${state.ensaios.length + 1}`, color: nextColor(), mode: s.mode || 'passa', rows: clone(s.rows), fundo: s.fundo || '', mtotal: s.mtotal || '', visible: true };
       state.ensaios.push(e); first = first || e;
     }
     if (first) state.sel = first.id;
@@ -259,6 +294,12 @@
     const e = { id: uid(), name: `Ensaio ${state.ensaios.length + 1}`, color: nextColor(), mode: 'passa', rows: C.STD_ROWS(), fundo: '', visible: true };
     state.ensaios.push(e); state.sel = e.id; renderAll(); save();
     const first = $('#rowsScroll .v'); if (first) first.focus();
+  };
+  $('#btnReset').onclick = () => {
+    snapshot();
+    state = fresh();
+    syncControls(); renderAll(); save();
+    toast('Padrão restaurado — voltaram os 3 exemplos.', { undo: true });
   };
   $('#btnExamples').onclick = () => {
     const have = new Set(state.ensaios.map(e => e.id));

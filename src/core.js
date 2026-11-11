@@ -13,10 +13,12 @@ const GranuloCore = (() => {
     { d: 19,    label: '¾″',     name: '19,0 mm (¾″)',    prio: 2 },
     { d: 9.5,   label: '⅜″',     name: '9,5 mm (⅜″)',     prio: 1 },
     { d: 4.75,  label: 'nº 4',   name: '4,75 mm (nº 4)',  prio: 3 },
+    { d: 2.36,  label: 'nº 8',   name: '2,36 mm (nº 8)',  prio: 1 },
     { d: 2.0,   label: 'nº 10',  name: '2,0 mm (nº 10)',  prio: 3 },
     { d: 1.2,   label: 'nº 16',  name: '1,2 mm (nº 16)',  prio: 1 },
     { d: 0.6,   label: 'nº 30',  name: '0,6 mm (nº 30)',  prio: 2 },
     { d: 0.42,  label: 'nº 40',  name: '0,42 mm (nº 40)', prio: 3 },
+    { d: 0.3,   label: 'nº 50',  name: '0,30 mm (nº 50)', prio: 2 },
     { d: 0.25,  label: 'nº 60',  name: '0,25 mm (nº 60)', prio: 1 },
     { d: 0.15,  label: 'nº 100', name: '0,15 mm (nº 100)',prio: 2 },
     { d: 0.075, label: 'nº 200', name: '0,075 mm (nº 200)',prio: 4 },
@@ -124,14 +126,30 @@ const GranuloCore = (() => {
   }
 
   /* ---------- Curva a partir do ensaio ---------- */
-  // ensaio: { mode: 'passa' | 'retida' | 'massa', rows:[{d,v}], fundo }
+  // ensaio: { mode: 'passa' | 'retida' | 'massa' (retida por peneira) | 'massap' (massa que passa, acumulada),
+  //           rows:[{d,v}], fundo, mtotal (massa inicial seca; opcional) }
   function buildCurve(e) {
     const warnings = [];
     const rows = e.rows || [];
     let pts = [];
-    let total = null;
+    let total = null, balance = null, overRange = 0, maxVal = null;
 
-    if (e.mode === 'massa') {
+    if (e.mode === 'massap') {
+      // massa (g) que PASSA em cada peneira (acumulada) ÷ massa inicial
+      const items = [];
+      rows.forEach((r, i) => {
+        const d = toNum(r.d), m = toNum(r.v);
+        if (d > 0 && isFinite(m)) { if (m < 0) warnings.push(`Linha ${i + 1}: massa negativa ignorada.`); else items.push({ i, d, m }); }
+      });
+      const initN = toNum(e.mtotal);
+      const initial = isFinite(initN) && initN > 0 ? initN : 0;
+      const mx = items.reduce((s, r) => Math.max(s, r.m), 0);
+      total = initial || mx;
+      balance = { sum: null, total, initial: initial > 0, diffPct: null };
+      if (items.length && !initial) warnings.push(`Sem massa inicial: usando a maior massa digitada (${fmtNum(mx, 5)} g) como total — informe a massa inicial da amostra.`);
+      if (initial && mx > initial * (1 + 1e-9)) warnings.push(`Há massa passante (${fmtNum(mx, 5)} g) maior que a massa inicial (${fmtNum(initial, 5)} g) — valor ajustado a 100%.`);
+      if (total > 0) for (const it of items) pts.push({ d: it.d, p: clamp(100 * it.m / total, 0, 100), row: it.i, m: it.m });
+    } else if (e.mode === 'massa') {
       const items = [];
       rows.forEach((r, i) => {
         const d = toNum(r.d), m = toNum(r.v);
@@ -143,7 +161,17 @@ const GranuloCore = (() => {
       items.sort((a, b) => b.d - a.d);
       const fundoN = toNum(e.fundo);
       const fundo = isFinite(fundoN) && fundoN > 0 ? fundoN : 0;
-      total = items.reduce((s, r) => s + r.m, 0) + fundo;
+      const sumAll = items.reduce((s, r) => s + r.m, 0) + fundo;
+      const initN = toNum(e.mtotal);
+      const initial = isFinite(initN) && initN > 0 ? initN : 0;
+      // massa de referência: a massa inicial seca informada ou, se não houver, a soma das pesagens
+      total = initial || sumAll;
+      if (items.length) {
+        const diff = total > 0 ? 100 * (total - sumAll) / total : 0;
+        balance = { sum: sumAll, total, initial: initial > 0, diffPct: diff };
+        if (initial && diff < -1) warnings.push(`A soma das massas (${fmtNum(sumAll, 4)} g) excede a massa inicial (${fmtNum(initial, 4)} g) — confira as pesagens.`);
+        else if (initial && diff > 1) warnings.push(`Diferença de ${fmtNum(diff, 2)}% entre a massa inicial e a soma das massas retidas (perda de material?).`);
+      }
       if (total > 0) {
         let cum = 0;
         for (const it of items) {
@@ -151,15 +179,16 @@ const GranuloCore = (() => {
           pts.push({ d: it.d, p: clamp(100 * (total - cum) / total, 0, 100), row: it.i, m: it.m });
         }
       }
-      if (items.length && fundo === 0)
-        warnings.push('Informe a massa retida no fundo (prato) para fechar o balanço de massas.');
+      if (items.length && fundo === 0 && !initial)
+        warnings.push('Informe a massa retida no fundo (prato) ou a massa inicial seca para fechar o balanço de massas.');
     } else {
       rows.forEach((r, i) => {
         const d = toNum(r.d), v = toNum(r.v);
         if (!(d > 0) || !isFinite(v)) return;
         let p = e.mode === 'retida' ? 100 - v : v;
+        if (v > 100 + 1e-9) { overRange++; maxVal = Math.max(maxVal || 0, v); }
         if (p < -1e-9 || p > 100 + 1e-9) {
-          warnings.push(`Linha ${i + 1}: valor fora de 0–100% — ajustado.`);
+          if (!(v > 100 + 1e-9)) warnings.push(`Linha ${i + 1}: valor fora de 0–100% — ajustado.`);
           p = clamp(p, 0, 100);
         }
         pts.push({ d, p, row: i });
@@ -183,7 +212,8 @@ const GranuloCore = (() => {
     if (bad.length)
       warnings.push(`% passante decresce com o aumento do diâmetro em ${bad.map(d => fmtNum(d) + ' mm').slice(0, 3).join(', ')}${bad.length > 3 ? '…' : ''} — confira os dados.`);
 
-    return { pts, warnings, total };
+    if (overRange) warnings.unshift(`${overRange} valor(es) acima de 100% foram limitados a 100% — a curva está distorcida.`);
+    return { pts, warnings, total, balance, overRange, maxVal };
   }
 
   /* ---------- Interpolação (log-linear em D) ---------- */
@@ -343,9 +373,9 @@ const GranuloCore = (() => {
 
   /* ---------- Análise completa ---------- */
   function analyze(e, sysId = 'abnt') {
-    const { pts, warnings, total } = buildCurve(e);
+    const { pts, warnings, total, balance, overRange, maxVal } = buildCurve(e);
     const valid = pts.length >= 2;
-    const out = { pts, warnings, total, valid, system: sysId };
+    const out = { pts, warnings, total, balance, overRange, maxVal, valid, system: sysId };
     if (!valid) return out;
 
     const co = coefficients(pts);

@@ -118,6 +118,18 @@ select.in{padding-right:6px}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0 0 8px;font-size:13px;color:var(--ink2)}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .legend i{width:16px;height:4px;border-radius:2px;background:var(--c)}
+.chart-body{display:flex;gap:12px;align-items:flex-start}
+.chart-body .chart-wrap{flex:1 1 auto;min-width:0}
+.dlist{flex:0 0 184px;display:flex;flex-direction:column;gap:12px;padding-top:2px}
+.dlist[hidden]{display:none}
+.dgrp{display:flex;flex-direction:column;gap:5px;align-items:flex-start}
+.dgrp h4{margin:0;font-size:12px;font-weight:600;color:var(--ink2);display:flex;align-items:center;gap:6px;max-width:100%}
+.dgrp h4 i{flex:0 0 14px;height:4px;border-radius:2px;background:var(--c)}
+.dgrp h4 span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dchips{display:flex;flex-wrap:wrap;gap:5px}
+.dchip{display:inline-block;background:#fff;border:1.2px solid var(--c);color:var(--c);border-radius:999px;padding:1px 9px;font-size:12.5px;font-weight:700;line-height:1.5;white-space:nowrap}
+.dchip.miss{border-style:dashed;--c:#8794a8;font-weight:600}
+@media (max-width:860px){.chart-body{flex-direction:column;gap:8px}.dlist{flex:0 0 auto;width:100%}}
 .chart-wrap{position:relative;overflow-x:auto;overflow-y:hidden;border-radius:10px}
 .gtip{position:absolute;left:0;top:0;z-index:5;pointer-events:none;background:rgba(255,255,255,.97);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(24,38,58,.18);padding:8px 10px;font-size:12.5px;min-width:180px;max-width:300px}
 .tt-h{font-weight:700;font-size:13.5px;margin-bottom:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -134,7 +146,10 @@ select.in{padding-right:6px}
 summary{cursor:pointer;font-weight:600;color:var(--ink2);font-size:14px}
 .fs-hint{display:none;font-size:12.5px;color:var(--muted);margin:4px 0}
 .chart-card.fs{position:fixed;inset:0;z-index:60;border-radius:0;border:0;display:flex;flex-direction:column;padding:10px 14px calc(10px + env(safe-area-inset-bottom))}
+.chart-card.fs .chart-body{flex:1;min-height:0}
 .chart-card.fs .chart-wrap{flex:1;min-height:0;overflow:auto}
+.chart-card.fs .dlist{max-height:100%;overflow-y:auto}
+@media (max-width:860px){.chart-card.fs .dlist{max-height:30%;overflow-y:auto}.chart-card.fs .chart-wrap{width:100%}}
 .chart-card.fs details{display:none}
 @media (orientation:portrait){.chart-card.fs .fs-hint{display:block}}
 @media (max-width:560px){.chart-head .btn span.lbl{display:none}}

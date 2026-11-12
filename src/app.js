@@ -357,9 +357,16 @@
     const m = CH.render({ width, height: 0, plotH, series: visibleSeries(), show: state.show, system: state.system });
     chartEl.innerHTML = m.svg;
     hover.setModel(m);
+    drawDList(m.series);
     lastKey = width + '|' + plotH;
     // legenda
     $('#legend').innerHTML = m.series.map(s => `<span style="--c:${s.color}"><i></i>${esc(s.name)}</span>`).join('');
+  }
+  const dlistEl = $('#dlist');
+  function drawDList(series) {
+    const gs = CH.dGroups(series, state.show);
+    dlistEl.hidden = !gs.length;
+    dlistEl.innerHTML = gs.map(g => `<div class="dgrp" style="--c:${g.color}"><h4><i></i><span title="${esc(g.name)}">${esc(g.name)}</span></h4><div class="dchips">${g.items.map(it => `<span class="dchip${it.missing ? ' miss' : ''}" style="--c:${it.missing ? '#8794a8' : it.color}">${esc(it.txt)}</span>`).join('')}</div></div>`).join('');
   }
   let rafId = 0;
   function redraw() { cancelAnimationFrame(rafId); rafId = requestAnimationFrame(drawChart); }

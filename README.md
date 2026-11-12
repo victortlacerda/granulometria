@@ -10,7 +10,7 @@ Funciona **no navegador e no celular, sem instalar nada e sem internet**: é um 
 
 - **Sem digitar de novo:** cole a tabela do Excel ou importe `.xlsx`, `.csv` ou `.txt`, com % passante, % retida acumulada ou massa retida.
 - **Planilha modelo pronta:** baixe um Excel com as peneiras padrão já preenchidas; é só digitar as massas retidas e o % passante sai calculado.
-- **Curva profissional:** escala logarítmica, peneiras ASTM no topo, % retida acumulada no eixo da direita, faixas de sedimentação e peneiramento e D10/D15/D30/D60/D85 marcados no gráfico.
+- **Curva profissional:** escala logarítmica, peneiras ASTM no topo, % retida acumulada no eixo da direita, faixas de sedimentação e peneiramento e D10/D15/D30/D60/D85 marcados no gráfico, com os valores listados ao lado (e no PNG exportado).
 - **Coeficientes e diagnóstico:** Cu, Cc e graduação (bem graduado, uniforme ou graduação aberta) com a fórmula aplicada e a interpretação do resultado.
 - **Classificação e frações:** frações pela ABNT NBR 6502 ou pelo SUCS (ASTM D2487), SUCS preliminar e estimativa de permeabilidade (Hazen) para areias limpas.
 - **Vários ensaios no mesmo gráfico:** compare amostras lado a lado, cada uma com sua cor.

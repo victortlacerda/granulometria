@@ -35,6 +35,25 @@ const GranuloChart = (() => {
     return '';
   }
 
+  const D_KEYS = [['D10', 10], ['D15', 15], ['D30', 30], ['D60', 60], ['D85', 85]];
+  /* grupos {name,color,items:[{key,txt,color,missing}]} dos D marcados — usados na lista lateral e no PNG */
+  function dGroups(series, show) {
+    const out = [];
+    for (const s of series) {
+      if (!s.a || !s.a.valid) continue;
+      const items = [];
+      for (const [key] of D_KEYS) {
+        if (!show[key.toLowerCase()]) continue;
+        const r = s.a.coef[key];
+        items.push(r && r.d != null
+          ? { key, txt: `${key} = ${C.fmtNum(r.d)} mm`, color: s.color }
+          : { key, txt: `${key} fora da curva`, color: s.color, missing: true });
+      }
+      if (items.length) out.push({ name: s.name, color: s.color, items });
+    }
+    return out;
+  }
+
   function render(opts) {
     const { width: W, height: H, series = [], show = {}, system = 'abnt', forExport = false, title = 'Curva granulométrica' } = opts;
     const sys = C.SYSTEMS[system] || C.SYSTEMS.abnt;
@@ -60,7 +79,22 @@ const GranuloChart = (() => {
       }
       if (row.length) legendRows.push(row);
     }
-    const legendH = forExport ? legendRows.length * 22 + 14 : 0;
+    // lista de valores de D (apenas exportação): uma linha (ou mais) por ensaio
+    const dRows = [];
+    if (forExport) {
+      for (const g of dGroups(vis, show)) {
+        const headW = 22 + aw(g.name, 11.5) + 14;
+        let x = headW, row = { head: g, chips: [] };
+        for (const it of g.items) {
+          const w = aw(it.txt, 11) + 12;
+          if (x + w > W - 40 && row.chips.length) { dRows.push(row); row = { chips: [] }; x = headW; }
+          row.chips.push({ it, w, x }); x += w + 6;
+        }
+        dRows.push(row);
+      }
+    }
+    const dH = dRows.length ? dRows.length * 24 + 12 : 0;
+    const legendH = forExport ? legendRows.length * 22 + 14 + dH : 0;
 
     const y0 = titleH + sieveH + 4;
     const bottomBlock = tickH + axisTitleH + bracketH + 6 + stripH + limH + 12 + legendH;
@@ -153,9 +187,8 @@ const GranuloChart = (() => {
       o.push(`<circle cx="${r1(X(q.d))}" cy="${r1(Y(q.p))}" r="3.6" fill="#fff" stroke="${s.color}" stroke-width="1.8"/>`);
 
     /* ----- linhas guia D10 / D30 / D60 ----- */
-    const chips = [];
     for (const s of vis) {
-      for (const [key, P] of [['D10', 10], ['D15', 15], ['D30', 30], ['D60', 60], ['D85', 85]]) {
+      for (const [key, P] of D_KEYS) {
         if (!show[key.toLowerCase()]) continue;
         const r = s.a.coef[key];
         if (!r || r.d == null) continue;
@@ -164,22 +197,7 @@ const GranuloChart = (() => {
         o.push(L(x, y, x, y1, s.color, 1.5, '6 4', ' opacity="0.9"'));
         o.push(`<circle cx="${r1(x)}" cy="${r1(y)}" r="6" fill="#fff" fill-opacity="0.65" stroke="${s.color}" stroke-width="2.2"/>`);
         o.push(`<circle cx="${r1(x)}" cy="${r1(y)}" r="1.8" fill="${s.color}"/>`);
-        chips.push({ x, txt: narrow ? `${key} ${C.fmtNum(r.d)}` : `${key} = ${C.fmtNum(r.d)} mm`, color: s.color });
       }
-    }
-    chips.sort((a, b) => a.x - b.x);
-    const rowsEnd = [];
-    for (const c of chips) {
-      const cs = narrow ? 10 : 11;
-      const w = aw(c.txt, cs) + 12;
-      let left = c.x - w / 2;
-      left = Math.max(x0 + 2, Math.min(left, x1 - w - 2));
-      let row = 0;
-      while (rowsEnd[row] !== undefined && left < rowsEnd[row] + 3) row++;
-      rowsEnd[row] = left + w;
-      const cy = y1 - 10 - row * (narrow ? 17 : 19);
-      o.push(`<rect x="${r1(left)}" y="${r1(cy - 8)}" width="${r1(w)}" height="${narrow ? 15 : 16}" rx="8" fill="#fff" fill-opacity="0.94" stroke="${c.color}" stroke-width="1.2"/>`);
-      o.push(T(left + w / 2, cy + 3.6, c.txt, { size: cs, fill: c.color, weight: 700 }));
     }
 
     /* ----- eixos: Y ----- */
@@ -257,6 +275,19 @@ const GranuloChart = (() => {
           o.push(T(x + 22, ly - 1, it.txt, { size: 12, fill: INK, anchor: 'start' }));
         }
         ly += 22;
+      }
+      ly += 6;
+      for (const row of dRows) {
+        if (row.head) {
+          o.push(`<rect x="${r1(x0)}" y="${ly - 1}" width="16" height="4" rx="2" fill="${row.head.color}"/>`);
+          o.push(T(x0 + 22, ly + 4, row.head.name, { size: 11.5, fill: INK, anchor: 'start', weight: 600 }));
+        }
+        for (const c of row.chips) {
+          const col = c.it.missing ? SOFT : c.it.color;
+          o.push(`<rect x="${r1(x0 + c.x)}" y="${ly - 6}" width="${r1(c.w)}" height="16" rx="8" fill="#fff" stroke="${col}" stroke-width="1.2"${c.it.missing ? ' stroke-dasharray="3 2"' : ''}/>`);
+          o.push(T(x0 + c.x + c.w / 2, ly + 5.6, c.it.txt, { size: 11, fill: col, weight: 700 }));
+        }
+        ly += 24;
       }
     }
 
@@ -386,7 +417,7 @@ const GranuloChart = (() => {
     return new Promise((res, rej) => cv.toBlob(b => b ? res(b) : rej(new Error('Falha ao gerar PNG')), 'image/png'));
   }
 
-  return { render, attachHover, toPNGBlob, fractionAt, chrome };
+  return { render, attachHover, toPNGBlob, fractionAt, chrome, dGroups };
 })();
 
 if (typeof module !== 'undefined' && module.exports) module.exports = GranuloChart;

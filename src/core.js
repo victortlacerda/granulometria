@@ -263,14 +263,15 @@ const GranuloCore = (() => {
 
   function classifyCu(cu) {
     if (cu == null) return null;
-    if (cu < 5)   return { key: 'uniforme', tone: 'warn', label: 'Muito uniforme', note: 'Cu < 5 — solo mal graduado' };
-    if (cu <= 15) return { key: 'media',    tone: 'info', label: 'Uniformidade média', note: 'Cu entre 5 e 15' };
-    return { key: 'hetero', tone: 'ok', label: 'Heterogêneo', note: 'Cu > 15 — solo bem graduado' };
+    if (cu < 5)   return { key: 'uniforme', tone: 'warn', label: 'Mal graduado (muito uniforme)', note: 'Cu < 5' };
+    if (cu <= 15) return { key: 'media',    tone: 'info', label: 'Uniformidade média', note: 'Cu = 5 a 15' };
+    return { key: 'hetero', tone: 'ok', label: 'Solo bem graduado (heterogêneo)', note: 'Cu > 15' };
   }
   function classifyCc(cc) {
     if (cc == null) return null;
-    if (cc >= 1 && cc <= 3) return { key: 'dentro', tone: 'ok', label: 'Curva harmônica', note: '1 ≤ Cc ≤ 3 — bem graduado' };
-    return { key: 'fora', tone: 'warn', label: 'Fora de 1–3', note: 'Cc fora de 1–3 — mal graduado' };
+    if (cc >= 1 && cc <= 3) return { key: 'dentro', tone: 'ok', label: 'Solo bem graduado', note: '1 ≤ Cc ≤ 3' };
+    if (cc > 3) return { key: 'alto', tone: 'warn', label: 'Solo mal graduado', note: 'Cc > 3' };
+    return { key: 'baixo', tone: 'warn', label: 'Solo mal graduado', note: 'Cc < 1' };
   }
 
   // Patamar horizontal (graduação aberta / descontínua): ≥ 1 década com inclinação ≤ 5 %/década,
@@ -383,6 +384,9 @@ const GranuloCore = (() => {
     out.cuClass = classifyCu(co.Cu);
     out.ccClass = classifyCc(co.Cc);
     out.gap = detectGap(pts);
+    // Cc fora de 1–3 só vira "graduação aberta" quando há de fato um patamar na curva
+    // (Cc < 1 também ocorre em areias uniformes e em curvas suaves com muitos finos)
+    if (out.ccClass && out.ccClass.key !== 'dentro' && out.gap) out.ccClass = { ...out.ccClass, label: 'Solo mal graduado (graduação aberta)' };
     out.comp = composition(pts, sysId);
     out.sg = sucsGroups(pts);
     out.sucs = sucsPrelim(out.sg, co.Cu, co.Cc);
@@ -399,7 +403,7 @@ const GranuloCore = (() => {
     } else if (co.Cu < 5) {
       g = { key: 'uniforme', tone: 'warn', label: 'Uniforme (mal graduado)', behavior: 'Grãos de tamanhos muito parecidos. Baixa compactação e alta permeabilidade (bom para filtros).' };
     } else {
-      g = { key: 'mal', tone: 'warn', label: 'Mal graduado', behavior: 'Distribuição não harmônica (Cc fora de 1–3 ou Cu insuficiente): compactação inferior à de um solo bem graduado.' };
+      g = { key: 'mal', tone: 'warn', label: 'Mal graduado', behavior: 'Cc fora de 1–3 ou Cu abaixo do mínimo do critério SUCS: compactação inferior à de um solo bem graduado.' };
     }
     out.grading = g;
     out.hazen = hazen(co.D10.d, co.Cu);

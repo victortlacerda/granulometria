@@ -239,8 +239,8 @@ const GranuloIO = (() => {
         num(co.D10.d, 6), num(co.D30.d, 6), num(co.D60.d, 6),
         { f: `IF(AND(ISNUMBER(B${r}),ISNUMBER(D${r})),D${r}/B${r},"")`, v: co.Cu == null ? '' : co.Cu, s: 3 },
         { f: `IF(AND(ISNUMBER(B${r}),ISNUMBER(C${r}),ISNUMBER(D${r})),C${r}^2/(B${r}*D${r}),"")`, v: co.Cc == null ? '' : co.Cc, s: 3 },
-        a.cuClass ? `${a.cuClass.label} (${a.cuClass.note})` : '—',
-        a.ccClass ? `${a.ccClass.label} (${a.ccClass.note})` : '—',
+        a.cuClass ? `${a.cuClass.label} — ${a.cuClass.note}` : '—',
+        a.ccClass ? `${a.ccClass.label} — ${a.ccClass.note}` : '—',
         a.grading.label,
         a.sucs ? a.sucs.symbol : '—',
         num(g('pedregulho').pct, 4), num(g('areia').pct, 4), num(g('silte').pct, 4), num(g('argila').pct, 4),
@@ -251,8 +251,8 @@ const GranuloIO = (() => {
     rows.push([]);
     rows.push([{ v: 'Critérios', s: 7 }]);
     [
-      'Cu < 5: muito uniforme (mal graduado) · 5 ≤ Cu ≤ 15: uniformidade média · Cu > 15: heterogêneo (bem graduado).',
-      'Cc entre 1 e 3: curva harmônica (bem graduado); fora dessa faixa: mal graduado.',
+      'Cu < 5: mal graduado (muito uniforme) · Cu = 5 a 15: uniformidade média · Cu > 15: solo bem graduado (heterogêneo).',
+      '1 ≤ Cc ≤ 3: solo bem graduado · Cc > 3 ou Cc < 1: solo mal graduado (graduação aberta quando a curva tem patamar).',
       'Bem graduado (SUCS): 1 ≤ Cc ≤ 3 e Cu ≥ 4 (pedregulho) ou Cu ≥ 6 (areia).',
       'D10, D30 e D60 obtidos por interpolação linear do % passante contra log(D) entre pontos medidos.',
     ].forEach(t => rows.push([{ v: t, s: 5 }]));

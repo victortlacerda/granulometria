@@ -78,6 +78,18 @@ ok('exercício da aula: massa passante (g) de uma amostra de 200 g', () => {
   console.log('   exercício: D10', C.fmtNum(a.coef.D10.d), 'D30', C.fmtNum(a.coef.D30.d), 'D60', C.fmtNum(a.coef.D60.d), 'Cu', C.fmtNum(a.coef.Cu), 'Cc', C.fmtNum(a.coef.Cc));
 });
 
+ok('rótulos de classificação de Cu e Cc', () => {
+  assert.equal(C.classifyCu(4.9).label, 'Mal graduado (muito uniforme)');
+  assert.equal(C.classifyCu(5).label, 'Uniformidade média'); assert.equal(C.classifyCu(15).label, 'Uniformidade média');
+  assert.equal(C.classifyCu(15.1).label, 'Solo bem graduado (heterogêneo)');
+  assert.equal(C.classifyCc(1).label, 'Solo bem graduado'); assert.equal(C.classifyCc(3).label, 'Solo bem graduado');
+  assert.equal(C.classifyCc(3.01).note, 'Cc > 3'); assert.equal(C.classifyCc(0.99).note, 'Cc < 1');
+  const [bem, uni, ab] = C.EXAMPLES.map(e => C.analyze(e, 'sucs'));
+  assert.equal(uni.ccClass.label, 'Solo mal graduado');            // areia uniforme: Cc 0,94, sem patamar
+  assert.equal(ab.ccClass.label, 'Solo mal graduado (graduação aberta)'); // patamar detectado
+  assert.equal(bem.ccClass.label, 'Solo bem graduado');
+});
+
 ok('D10 indeterminado quando a curva não chega a 10% (sem sedimentação)', () => {
   const e = { mode: 'passa', rows: [{ d: '4,75', v: '100' }, { d: '0,6', v: '60' }, { d: '0,075', v: '25' }] };
   const r = C.analyze(e);

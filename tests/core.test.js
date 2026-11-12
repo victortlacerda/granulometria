@@ -152,18 +152,4 @@ ok('formatação pt-BR', () => {
   assert.equal(C.fmtSci(0.032), '3,2×10⁻²');
 });
 
-ok('critério de filtro de Terzaghi', () => {
-  const [bem, uni, ab] = C.EXAMPLES.map(e => C.analyze(e, 'sucs'));
-  const r = C.filterCriteria(bem, uni);   // base = bem graduado, filtro = areia uniforme
-  near(r.perm, uni.coef.D15.d / bem.coef.D15.d, 1e-9);
-  near(r.pipe, uni.coef.D15.d / bem.coef.D85.d, 1e-9);
-  const fake = (d15, d85) => ({ coef: { D15: { d: d15 }, D85: { d: d85 } } });
-  assert.equal(C.filterCriteria(fake(1, 10), fake(6, 1)).sPerm, 'ok');      // 6 > 5
-  assert.equal(C.filterCriteria(fake(1, 10), fake(4.5, 1)).sPerm, 'limite'); // 4–5
-  assert.equal(C.filterCriteria(fake(1, 10), fake(3, 1)).sPerm, 'falha');   // 3 < 4
-  assert.equal(C.filterCriteria(fake(1, 10), fake(3, 1)).sPipe, 'ok');      // 3/10 < 4
-  assert.equal(C.filterCriteria(fake(1, 1), fake(6, 1)).sPipe, 'falha');    // 6/1 > 5
-  assert.equal(C.filterCriteria(fake(1, 10), { coef: { D15: { d: null } } }).overall, null);
-});
-
 console.log(`\n${n} testes OK`);

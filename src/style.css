@@ -262,3 +262,11 @@ ol.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:26px
 /* evita que tabelas largas alarguem a página no celular */
 .app>*,.col>*,.results,.card{min-width:0}
 body{overflow-x:hidden}
+
+.filt{border-top:1px solid var(--line2);margin:4px 0 8px;padding-top:8px}
+.filt h4{margin:0 0 6px;font-size:13.5px;color:var(--ink2)}
+.filt .hint{margin:4px 0}
+.filt-sel{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted);margin:2px 0 6px}
+.filt-sel select{flex:1;min-width:0;max-width:100%}
+.filt-tbl td small{display:block;color:var(--muted);font-size:12px}
+.filt .verdict{margin:6px 0 0}

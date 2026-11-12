@@ -365,6 +365,21 @@ const GranuloCore = (() => {
   }
 
   // Hazen: k = C·D10² (D10 em cm → k em cm/s)
+  /* Critério de Terzaghi (1922) para filtros: base = solo a proteger, filtro = material drenante.
+     permeabilidade: D15(filtro)/d15(base) > 4 a 5  ·  estabilidade (piping): D15(filtro)/d85(base) < 4 a 5.
+     Faixa 4–5 = limítrofe (a literatura cita 4 ou 5 conforme o autor). */
+  function filterCriteria(base, filt) {
+    const g = (a, k) => (a && a.coef && a.coef[k] && a.coef[k].d != null) ? a.coef[k].d : null;
+    const D15f = g(filt, 'D15'), d15b = g(base, 'D15'), d85b = g(base, 'D85');
+    const perm = D15f != null && d15b != null ? D15f / d15b : null;
+    const pipe = D15f != null && d85b != null ? D15f / d85b : null;
+    const sPerm = perm == null ? null : perm > 5 ? 'ok' : perm >= 4 ? 'limite' : 'falha';
+    const sPipe = pipe == null ? null : pipe < 4 ? 'ok' : pipe <= 5 ? 'limite' : 'falha';
+    let overall = null;
+    if (sPerm && sPipe) overall = (sPerm === 'falha' || sPipe === 'falha') ? 'falha' : (sPerm === 'ok' && sPipe === 'ok') ? 'ok' : 'limite';
+    return { D15f, d15b, d85b, perm, pipe, sPerm, sPipe, overall };
+  }
+
   function hazen(D10mm, cu, C = 100) {
     if (D10mm == null) return null;
     const applicable = D10mm >= 0.1 && D10mm <= 3 && (cu == null || cu < 5);
@@ -441,7 +456,7 @@ const GranuloCore = (() => {
     SIEVES, SYSTEMS, GROUP_COLORS, EXAMPLES, LESSON_EXAMPLE, STD_ROWS,
     toNum, fmtNum, fmtPct, fmtSci, sieveFor, clamp,
     buildCurve, diameterAt, passAt, coefficients, classifyCu, classifyCc, detectGap,
-    composition, sucsGroups, sucsPrelim, hazen, analyze,
+    composition, sucsGroups, sucsPrelim, hazen, filterCriteria, analyze,
   };
 })();
 

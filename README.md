@@ -13,6 +13,7 @@ Funciona **no navegador e no celular, sem instalar nada e sem internet**: é um 
 - **Curva profissional:** escala logarítmica, peneiras ASTM no topo, % retida acumulada no eixo da direita, faixas de sedimentação e peneiramento e D10/D15/D30/D60/D85 marcados no gráfico, com os valores listados ao lado (e no PNG exportado).
 - **Coeficientes e diagnóstico:** Cu, Cc e graduação (bem graduado, uniforme ou graduação aberta) com a fórmula aplicada e a interpretação do resultado.
 - **Classificação e frações:** frações pela ABNT NBR 6502 ou pelo SUCS (ASTM D2487), SUCS preliminar e estimativa de permeabilidade (Hazen) para areias limpas.
+- **Critério de filtro (Terzaghi):** escolha um ensaio como filtro de outro e veja na hora as relações de permeabilidade e de estabilidade (piping), com o veredito "atende", "limítrofe" ou "não atende".
 - **Vários ensaios no mesmo gráfico:** compare amostras lado a lado, cada uma com sua cor.
 - **Pronto para o relatório:** exporte o gráfico em PNG ou uma planilha Excel com dados, coeficientes e gráfico.
 - **Aula embutida:** a aba Teoria explica peneiramento, sedimentação, Cu e Cc, tipos de curva, SUCS e aplicações práticas.

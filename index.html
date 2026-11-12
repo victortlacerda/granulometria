@@ -277,6 +277,14 @@ ol.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:26px
 .app>*,.col>*,.results,.card{min-width:0}
 body{overflow-x:hidden}
 
+.filt{border-top:1px solid var(--line2);margin:4px 0 8px;padding-top:8px}
+.filt h4{margin:0 0 6px;font-size:13.5px;color:var(--ink2)}
+.filt .hint{margin:4px 0}
+.filt-sel{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted);margin:2px 0 6px}
+.filt-sel select{flex:1;min-width:0;max-width:100%}
+.filt-tbl td small{display:block;color:var(--muted);font-size:12px}
+.filt .verdict{margin:6px 0 0}
+
 </style>
 </head>
 <body>
@@ -551,7 +559,7 @@ body{overflow-x:hidden}
   <div class="cards3">
     <div class="app-card"><h4>Aterros e terraplenagem</h4><p>Solos bem graduados atingem maior massa específica seca na compactação e maior resistência; a curva ajuda a escolher jazidas de empréstimo e a prever a facilidade de compactação.</p></div>
     <div class="app-card"><h4>Pavimentação</h4><p>Bases, sub-bases e reforços são especificados por <b>faixas granulométricas</b>: a curva do material precisa “caber” dentro da faixa de projeto. Misturas de dois ou mais solos corrigem a graduação.</p></div>
-    <div class="app-card"><h4>Filtros e drenos</h4><p>Critério de Terzaghi: D<sub>15</sub>(filtro)/D<sub>85</sub>(solo) &lt; 5 (retém o solo) e D<sub>15</sub>(filtro)/D<sub>15</sub>(solo) &gt; 5 (drena). Solos uniformes e limpos são bons filtros.</p></div>
+    <div class="app-card"><h4>Filtros e drenos</h4><p>Critério de Terzaghi (1922): D<sub>15</sub>(filtro)/d<sub>85</sub>(solo) &lt; 4 a 5 (relação de estabilidade, evita o <i>piping</i>) e D<sub>15</sub>(filtro)/d<sub>15</sub>(solo) &gt; 4 a 5 (relação de permeabilidade, o filtro drena). O app calcula isso no card de resultados: escolha o filtro entre os ensaios.</p></div>
     <div class="app-card"><h4>Permeabilidade (Hazen)</h4><p>Para areias limpas, k ≈ C·D<sub>10</sub>² (D<sub>10</sub> em cm, k em cm/s, C ≈ 100), válida para 0,1 mm &lt; D<sub>10</sub> &lt; 3 mm e C<sub>u</sub> &lt; 5. O app exibe essa estimativa quando aplicável.</p></div>
     <div class="app-card"><h4>Barragens e erosão interna</h4><p>Solos de graduação aberta (curva com patamar) podem perder a fração fina carregada pela água entre os grãos grossos — risco de erosão interna. A curva é o primeiro teste de suscetibilidade.</p></div>
     <div class="app-card"><h4>Liquefação de areias</h4><p>Areias finas, uniformes (C<sub>u</sub> baixo), fofas e saturadas são as mais suscetíveis à liquefação sob carregamento cíclico (sismos, vibrações).</p></div>
@@ -983,6 +991,21 @@ const GranuloCore = (() => {
   }
 
   // Hazen: k = C·D10² (D10 em cm → k em cm/s)
+  /* Critério de Terzaghi (1922) para filtros: base = solo a proteger, filtro = material drenante.
+     permeabilidade: D15(filtro)/d15(base) > 4 a 5  ·  estabilidade (piping): D15(filtro)/d85(base) < 4 a 5.
+     Faixa 4–5 = limítrofe (a literatura cita 4 ou 5 conforme o autor). */
+  function filterCriteria(base, filt) {
+    const g = (a, k) => (a && a.coef && a.coef[k] && a.coef[k].d != null) ? a.coef[k].d : null;
+    const D15f = g(filt, 'D15'), d15b = g(base, 'D15'), d85b = g(base, 'D85');
+    const perm = D15f != null && d15b != null ? D15f / d15b : null;
+    const pipe = D15f != null && d85b != null ? D15f / d85b : null;
+    const sPerm = perm == null ? null : perm > 5 ? 'ok' : perm >= 4 ? 'limite' : 'falha';
+    const sPipe = pipe == null ? null : pipe < 4 ? 'ok' : pipe <= 5 ? 'limite' : 'falha';
+    let overall = null;
+    if (sPerm && sPipe) overall = (sPerm === 'falha' || sPipe === 'falha') ? 'falha' : (sPerm === 'ok' && sPipe === 'ok') ? 'ok' : 'limite';
+    return { D15f, d15b, d85b, perm, pipe, sPerm, sPipe, overall };
+  }
+
   function hazen(D10mm, cu, C = 100) {
     if (D10mm == null) return null;
     const applicable = D10mm >= 0.1 && D10mm <= 3 && (cu == null || cu < 5);
@@ -1059,7 +1082,7 @@ const GranuloCore = (() => {
     SIEVES, SYSTEMS, GROUP_COLORS, EXAMPLES, LESSON_EXAMPLE, STD_ROWS,
     toNum, fmtNum, fmtPct, fmtSci, sieveFor, clamp,
     buildCurve, diameterAt, passAt, coefficients, classifyCu, classifyCc, detectGap,
-    composition, sucsGroups, sucsPrelim, hazen, analyze,
+    composition, sucsGroups, sucsPrelim, hazen, filterCriteria, analyze,
   };
 })();
 
@@ -2444,7 +2467,31 @@ const GranuloChart = (() => {
     if (r && r.reason === 'abaixo') return `curva não chega a ${key.slice(1)}%`;
     return 'indisponível';
   }
-  function resultCard(e, a) {
+  const FILT = { ok: ['ok', 'Atende'], limite: ['warn', 'Limítrofe (4 a 5)'], falha: ['bad', 'Não atende'] };
+  function filterBlock(e, a, ok) {
+    const others = ok.filter(x => x.id !== e.id);
+    const head = '<div class="filt"><h4>Critério de filtro (Terzaghi)</h4>';
+    if (!others.length) return head + '<p class="hint">Adicione outro ensaio válido para usá-lo como material de filtro deste solo.</p></div>';
+    const sel = others.some(x => x.id === e.filter) ? e.filter : '';
+    const opts = `<option value="">— escolha o filtro —</option>` + others.map(x => `<option value="${esc(x.id)}"${x.id === sel ? ' selected' : ''}>${esc(x.name || 'Sem nome')}</option>`).join('');
+    let body = '<p class="hint">Este ensaio é o <b>solo de base</b> (a proteger). Escolha qual ensaio atua como <b>filtro</b>.</p>';
+    if (sel) {
+      const r = C.filterCriteria(a, A.get(sel));
+      const fm = (x) => x == null ? '—' : C.fmtNum(x, 3);
+      const row = (name, formula, val, st, rule) => {
+        const [tone, lbl] = st ? FILT[st] : ['muted', 'indisponível'];
+        return `<tr><td>${name}<small>${formula}</small></td><td class="n"><b>${fm(val)}</b></td><td>${rule}</td><td><span class="pill ${tone}">${lbl}</span></td></tr>`;
+      };
+      body += `<table class="tbl filt-tbl">
+        ${row('Permeabilidade', 'D<sub>15</sub>(filtro) / d<sub>15</sub>(base)', r.perm, r.sPerm, '&gt; 4 a 5')}
+        ${row('Estabilidade (piping)', 'D<sub>15</sub>(filtro) / d<sub>85</sub>(base)', r.pipe, r.sPipe, '&lt; 4 a 5')}
+      </table>
+      <p class="hint">D<sub>15</sub> filtro = ${r.D15f != null ? C.fmtNum(r.D15f) + ' mm' : '—'} · d<sub>15</sub> base = ${r.d15b != null ? C.fmtNum(r.d15b) + ' mm' : '—'} · d<sub>85</sub> base = ${r.d85b != null ? C.fmtNum(r.d85b) + ' mm' : '—'}. Valores entre 4 e 5 são limítrofes: a literatura adota 4 ou 5 conforme o autor.</p>`;
+      if (r.overall) { const [tone, lbl] = FILT[r.overall]; body += `<p class="verdict"><span class="pill ${tone}">${r.overall === 'ok' ? 'Filtro adequado' : r.overall === 'limite' ? 'Verificar (limítrofe)' : 'Filtro inadequado'}</span> ${r.overall === 'falha' ? (r.sPerm === 'falha' ? 'Filtro pouco permeável em relação ao solo. ' : '') + (r.sPipe === 'falha' ? 'Filtro grosso demais: não retém as partículas do solo (risco de piping). ' : '') : ''}</p>`; }
+    }
+    return head + `<label class="filt-sel">Filtro: <select data-filter="${esc(e.id)}">${opts}</select></label>${body}</div>`;
+  }
+  function resultCard(e, a, ok) {
     const co = a.coef, g = a.grading, cuc = a.cuClass, ccc = a.ccClass;
     const groups = a.comp.groups.filter(x => x.pct != null && x.pct > 0.05);
     const segs = [...groups.map(x => ({ label: x.label + (x.partial ? ' (≥ ' + C.fmtNum(a.comp.dmin) + ' mm)' : ''), pct: x.pct, color: x.color })),
@@ -2471,6 +2518,7 @@ const GranuloChart = (() => {
         ${a.sucs ? `<dt>SUCS prelim.</dt><dd>${esc(a.sucs.symbol)}<small>${esc(a.sucs.name)}. ${esc(a.sucs.note)}</small></dd>` : ''}
         ${h ? `<dt>k (Hazen)</dt><dd>≈ ${C.fmtSci(a.hazen.k)} cm/s<small>k = C·D10², C = 100 — estimativa para areias limpas</small></dd>` : ''}
       </dl>
+      ${filterBlock(e, a, ok)}
       <details><summary>Frações (${esc(C.SYSTEMS[state.system].name)})</summary>
         <table class="tbl" style="margin-top:6px"><tr><th>Fração</th><th>Intervalo</th><th class="n">%</th></tr>${frTbl}</table>
         ${a.comp.approx ? '<p class="hint" style="margin-top:6px">Limite silte/areia de 0,06 mm aproximado pela peneira nº 200 (0,075 mm).</p>' : ''}
@@ -2478,6 +2526,12 @@ const GranuloChart = (() => {
       </details>
     </article>`;
   }
+  $('#results').addEventListener('change', (ev) => {
+    const t = ev.target.closest && ev.target.closest('select[data-filter]');
+    if (!t) return;
+    const e = state.ensaios.find(x => x.id === t.dataset.filter);
+    if (e) { e.filter = t.value || ''; renderResults(); save(); }
+  });
   function renderResults() {
     const list = state.ensaios.filter(e => e.visible);
     const ok = list.filter(e => A.get(e.id).valid);
@@ -2491,7 +2545,7 @@ const GranuloChart = (() => {
           ok.map(e => { const a = A.get(e.id), co = a.coef, sg = a.sg; return `<tr><td><span class="sw" style="--c:${e.color}"></span>${esc(e.name)}</td><td class="n">${f(co.D10.d)}</td><td class="n">${f(co.D30.d)}</td><td class="n">${f(co.D60.d)}</td><td class="n">${f(co.Cu)}</td><td class="n">${f(co.Cc)}</td><td><span class="tone-${a.grading.tone}"><b>${esc(a.grading.label)}</b></span></td><td>${a.sucs ? esc(a.sucs.symbol) : '—'}</td><td class="n">${sg ? C.fmtPct(sg.gravel, 0) : '—'}</td><td class="n">${sg ? C.fmtPct(sg.sand, 0) : '—'}</td><td class="n">${sg ? C.fmtPct(sg.fines, 0) : '—'}</td></tr>`; }).join('') +
           '</table></div><p class="hint" style="margin-top:-6px">Diâmetros em mm. % pedregulho/areia/finos pelos limites SUCS (4,75 e 0,075 mm).</p>';
       }
-      html += `<div class="res-grid">${ok.map(e => resultCard(e, A.get(e.id))).join('')}</div>`;
+      html += `<div class="res-grid">${ok.map(e => resultCard(e, A.get(e.id), ok)).join('')}</div>`;
     }
     const pending = list.filter(e => !A.get(e.id).valid);
     if (pending.length && ok.length) html += `<p class="hint" style="margin-top:10px">Sem dados suficientes: ${pending.map(e => esc(e.name)).join(', ')}.</p>`;

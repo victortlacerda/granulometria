@@ -444,7 +444,31 @@
     if (r && r.reason === 'abaixo') return `curva não chega a ${key.slice(1)}%`;
     return 'indisponível';
   }
-  function resultCard(e, a) {
+  const FILT = { ok: ['ok', 'Atende'], limite: ['warn', 'Limítrofe (4 a 5)'], falha: ['bad', 'Não atende'] };
+  function filterBlock(e, a, ok) {
+    const others = ok.filter(x => x.id !== e.id);
+    const head = '<div class="filt"><h4>Critério de filtro (Terzaghi)</h4>';
+    if (!others.length) return head + '<p class="hint">Adicione outro ensaio válido para usá-lo como material de filtro deste solo.</p></div>';
+    const sel = others.some(x => x.id === e.filter) ? e.filter : '';
+    const opts = `<option value="">— escolha o filtro —</option>` + others.map(x => `<option value="${esc(x.id)}"${x.id === sel ? ' selected' : ''}>${esc(x.name || 'Sem nome')}</option>`).join('');
+    let body = '<p class="hint">Este ensaio é o <b>solo de base</b> (a proteger). Escolha qual ensaio atua como <b>filtro</b>.</p>';
+    if (sel) {
+      const r = C.filterCriteria(a, A.get(sel));
+      const fm = (x) => x == null ? '—' : C.fmtNum(x, 3);
+      const row = (name, formula, val, st, rule) => {
+        const [tone, lbl] = st ? FILT[st] : ['muted', 'indisponível'];
+        return `<tr><td>${name}<small>${formula}</small></td><td class="n"><b>${fm(val)}</b></td><td>${rule}</td><td><span class="pill ${tone}">${lbl}</span></td></tr>`;
+      };
+      body += `<table class="tbl filt-tbl">
+        ${row('Permeabilidade', 'D<sub>15</sub>(filtro) / d<sub>15</sub>(base)', r.perm, r.sPerm, '&gt; 4 a 5')}
+        ${row('Estabilidade (piping)', 'D<sub>15</sub>(filtro) / d<sub>85</sub>(base)', r.pipe, r.sPipe, '&lt; 4 a 5')}
+      </table>
+      <p class="hint">D<sub>15</sub> filtro = ${r.D15f != null ? C.fmtNum(r.D15f) + ' mm' : '—'} · d<sub>15</sub> base = ${r.d15b != null ? C.fmtNum(r.d15b) + ' mm' : '—'} · d<sub>85</sub> base = ${r.d85b != null ? C.fmtNum(r.d85b) + ' mm' : '—'}. Valores entre 4 e 5 são limítrofes: a literatura adota 4 ou 5 conforme o autor.</p>`;
+      if (r.overall) { const [tone, lbl] = FILT[r.overall]; body += `<p class="verdict"><span class="pill ${tone}">${r.overall === 'ok' ? 'Filtro adequado' : r.overall === 'limite' ? 'Verificar (limítrofe)' : 'Filtro inadequado'}</span> ${r.overall === 'falha' ? (r.sPerm === 'falha' ? 'Filtro pouco permeável em relação ao solo. ' : '') + (r.sPipe === 'falha' ? 'Filtro grosso demais: não retém as partículas do solo (risco de piping). ' : '') : ''}</p>`; }
+    }
+    return head + `<label class="filt-sel">Filtro: <select data-filter="${esc(e.id)}">${opts}</select></label>${body}</div>`;
+  }
+  function resultCard(e, a, ok) {
     const co = a.coef, g = a.grading, cuc = a.cuClass, ccc = a.ccClass;
     const groups = a.comp.groups.filter(x => x.pct != null && x.pct > 0.05);
     const segs = [...groups.map(x => ({ label: x.label + (x.partial ? ' (≥ ' + C.fmtNum(a.comp.dmin) + ' mm)' : ''), pct: x.pct, color: x.color })),
@@ -471,6 +495,7 @@
         ${a.sucs ? `<dt>SUCS prelim.</dt><dd>${esc(a.sucs.symbol)}<small>${esc(a.sucs.name)}. ${esc(a.sucs.note)}</small></dd>` : ''}
         ${h ? `<dt>k (Hazen)</dt><dd>≈ ${C.fmtSci(a.hazen.k)} cm/s<small>k = C·D10², C = 100 — estimativa para areias limpas</small></dd>` : ''}
       </dl>
+      ${filterBlock(e, a, ok)}
       <details><summary>Frações (${esc(C.SYSTEMS[state.system].name)})</summary>
         <table class="tbl" style="margin-top:6px"><tr><th>Fração</th><th>Intervalo</th><th class="n">%</th></tr>${frTbl}</table>
         ${a.comp.approx ? '<p class="hint" style="margin-top:6px">Limite silte/areia de 0,06 mm aproximado pela peneira nº 200 (0,075 mm).</p>' : ''}
@@ -478,6 +503,12 @@
       </details>
     </article>`;
   }
+  $('#results').addEventListener('change', (ev) => {
+    const t = ev.target.closest && ev.target.closest('select[data-filter]');
+    if (!t) return;
+    const e = state.ensaios.find(x => x.id === t.dataset.filter);
+    if (e) { e.filter = t.value || ''; renderResults(); save(); }
+  });
   function renderResults() {
     const list = state.ensaios.filter(e => e.visible);
     const ok = list.filter(e => A.get(e.id).valid);
@@ -491,7 +522,7 @@
           ok.map(e => { const a = A.get(e.id), co = a.coef, sg = a.sg; return `<tr><td><span class="sw" style="--c:${e.color}"></span>${esc(e.name)}</td><td class="n">${f(co.D10.d)}</td><td class="n">${f(co.D30.d)}</td><td class="n">${f(co.D60.d)}</td><td class="n">${f(co.Cu)}</td><td class="n">${f(co.Cc)}</td><td><span class="tone-${a.grading.tone}"><b>${esc(a.grading.label)}</b></span></td><td>${a.sucs ? esc(a.sucs.symbol) : '—'}</td><td class="n">${sg ? C.fmtPct(sg.gravel, 0) : '—'}</td><td class="n">${sg ? C.fmtPct(sg.sand, 0) : '—'}</td><td class="n">${sg ? C.fmtPct(sg.fines, 0) : '—'}</td></tr>`; }).join('') +
           '</table></div><p class="hint" style="margin-top:-6px">Diâmetros em mm. % pedregulho/areia/finos pelos limites SUCS (4,75 e 0,075 mm).</p>';
       }
-      html += `<div class="res-grid">${ok.map(e => resultCard(e, A.get(e.id))).join('')}</div>`;
+      html += `<div class="res-grid">${ok.map(e => resultCard(e, A.get(e.id), ok)).join('')}</div>`;
     }
     const pending = list.filter(e => !A.get(e.id).valid);
     if (pending.length && ok.length) html += `<p class="hint" style="margin-top:10px">Sem dados suficientes: ${pending.map(e => esc(e.name)).join(', ')}.</p>`;

@@ -350,12 +350,13 @@ const GranuloCore = (() => {
     const isG = g.gravel > g.sand;
     const L = isG ? 'G' : 'S';
     const base = isG ? 'Pedregulho' : 'Areia';
+    const o = isG ? 'o' : 'a'; // concordância: pedregulho (m) / areia (f)
     const grad = (cu != null && cc != null) ? (cc >= 1 && cc <= 3 && cu >= (isG ? 4 : 6)) : null;
     if (g.fines < 5) {
-      if (grad == null) return { symbol: `${L}W ou ${L}P`, name: `${base} limpo`, note: 'Não foi possível calcular Cu e Cc (faltam dados de finos).' };
+      if (grad == null) return { symbol: `${L}W ou ${L}P`, name: `${base} limp${o}`, note: 'Não foi possível calcular Cu e Cc (faltam dados de finos).' };
       return grad
-        ? { symbol: `${L}W`, name: `${base} bem graduado`, note: `Cu ≥ ${isG ? 4 : 6} e 1 ≤ Cc ≤ 3, com menos de 5% de finos.` }
-        : { symbol: `${L}P`, name: `${base} mal graduado`, note: 'Não atende simultaneamente aos critérios de Cu e Cc.' };
+        ? { symbol: `${L}W`, name: `${base} bem graduad${o}`, note: `Cu ≥ ${isG ? 4 : 6} e 1 ≤ Cc ≤ 3, com menos de 5% de finos.` }
+        : { symbol: `${L}P`, name: `${base} mal graduad${o}`, note: 'Não atende simultaneamente aos critérios de Cu e Cc.' };
     }
     if (g.fines <= 12) {
       const w = grad == null ? 'W/P' : grad ? 'W' : 'P';
